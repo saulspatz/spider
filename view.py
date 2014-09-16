@@ -46,7 +46,8 @@ class View:
   crucial, since only canvas items tagged "card" will respond to mouse
   clicks.
   '''
-  def __init__(self, parent, width, height):
+  def __init__(self, parent, width, height, **kwargs):
+    # kwargs passed to Scrolled Canvas
     self.parent = parent          # parent is the Spider application
     self.model =  parent.model
     self.root = root = tk.Tk()
@@ -68,13 +69,14 @@ class View:
     for k in range(10):
       self.waste.append((x, y)) 
       x += XSPACING 
-    tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL)
+
     options = tk.Frame(root, bg = OPTION_BG)
     self.circular = tk.Label(options, text = " Circular ", relief = tk.RIDGE, font = OPTION_FONT,  bg = OPTION_BG, fg = 'Black', bd = 2)
     self.open =     tk.Label(options, text = " Open     ", relief = tk.RIDGE, font = OPTION_FONT, bg = OPTION_BG, fg = 'Black', bd = 2)
     self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     options.pack(expand = tk.YES, fill = tk.X)
+    tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL, **kwargs)
     tableau.pack(expand = tk.YES, fill=tk.BOTH) 
     self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
                                           fill = BUTTON, outline = BUTTON, tag = "undo")
@@ -274,7 +276,7 @@ class View:
     right = left + CARDWIDTH
     
     def findDestInArray(seq):
-      if event.y < seq[0][1]:
+      if canvas.canvasy(event.y) < seq[0][1]:
         return -1      
       for k, w in enumerate(seq):
         west = w[0]       

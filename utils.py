@@ -44,14 +44,13 @@ class ScrolledCanvas(tk.Frame):
   so we don't have to put in a one-line definition every time we use another method.
   '''
   
-  def __init__(self, master, width, height, bg, cursor, scrolls):
+  def __init__(self, master, width, height, bg, cursor, scrolls, **kwargs):
     tk.Frame.__init__(self, master)
-    canv = self.canvas = tk.Canvas(self, bg=bg, relief=tk.SUNKEN)
+    canv = self.canvas = tk.Canvas(self, bg=bg, relief=tk.SUNKEN, **kwargs)
     canv.config(width=width, height=height)           # display area size
-    canv.config(scrollregion=(0, 0, width, height))   # canvas size corners
     canv.config(highlightthickness=0)                 # no pixels to border
     canv.grid(row = 0, column = 0, sticky = 'news')
-
+    
     if scrolls in (tk.BOTH, tk.VERTICAL):
       ybar = tk.Scrollbar(self, orient = tk.VERTICAL)
       ybar.config(command=canv.yview)                   # xlink sbar and canv
