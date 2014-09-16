@@ -53,7 +53,7 @@ The most important thing in organizing the waste piles are empty piles, or "spac
 STATS
 Experts expect to win spider solitaire one time in three with physical cards, but this appears to be partly an artifact of imperfect shuffling.  With computer-shuffled cards, one time in five is more realistic.
 
-VARIANTS (not implemented yet)
+VARIANTS 
 In circular spider solitaire, a King may be placed on top of an Ace and a run may have a King on top of an Ace, so that the 3, 2, Ace, King, Queen of Clubs can be moved onto a 4.  A run can comprise more than 13 cards.  The run must still be in sequence from King down to Ace before being moved to a foundation pile.
 
 '''
