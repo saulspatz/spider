@@ -47,6 +47,7 @@ class View:
     self.parent = parent          # parent is the Spider application
     self.model =  parent.model
     self.root = root = tk.Tk()
+    self.root.wm_geometry('950x800-10+10')
     root.title("Spider Solitaire")
     self.menu = tk.Menu(root)         # parent constructs actual menu         
     root.config(menu=self.menu)                 
@@ -126,7 +127,7 @@ class View:
         y += OFFSET1
       canvas.itemconfigure(tag, image = foto)
       canvas.tag_raise(tag) 
-      
+
   def show(self):
     model = self.model
     canvas = self.tableau

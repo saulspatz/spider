@@ -106,6 +106,7 @@ class Card:
   A card knows whether it is face up or own, but does not know 
   which stack it is in.
   '''
+  circular = False
   def __init__(self, rank, suit, back):
     self.rank = rank
     self.suit = suit
@@ -128,7 +129,11 @@ class Card:
   # Overloaded operators for predecessor and successor
   
   def __lt__(self, other):
-    return self.suit == other.suit and self.rank == other.rank-1
+    if self.suit != other.suit:
+      return False
+    answer = (self.rank == other.rank-1 or 
+              (self.circular and self.rank == KING and other.rank == ACE))
+    return answer 
   
   def __gt__(self, other):
     return other < self
@@ -190,7 +195,9 @@ class Model:
     for rank, suit, back in itertools.product(ALLRANKS, SUITNAMES, COLORNAMES):
       self.deck.append(Card(rank, suit, back))
   
-  def deal(self):
+  def deal(self, circular = False, open=False):
+    self.circular = Card.circular = circular
+    self.open = open
     self.shuffle()
     self.dealDown()
     self.dealUp()
@@ -199,11 +206,12 @@ class Model:
     
   def dealDown(self):
     '''
-    Deal the face down cards into the initial layout.
+    Deal the face down cards into the initial layout, unless the
+    user has specified open spider.
     '''
     for n in range(44):
       card = self.stock.pop()
-      self.waste[n%10].add(card, False)
+      self.waste[n%10].add(card, self.open)
       
   def dealUp(self, redo=False):
     '''
@@ -271,9 +279,12 @@ class Model:
     
     if not self.selection:
       return False
-    if not dest:
-      return True                                               # can always drop on empty pile
-    return dest[-1].rank - source[0].rank == 1  # e.g. can drop a 4 on a 5
+    if not dest:      # can always drop on empty pile
+      return True
+    if dest[-1].rank - source[0].rank == 1:  
+      return True       # e.g. can drop a 4 on a 5
+    if self.circular:   # can place King on ACE
+      return dest[-1].rank == ACE and source[0].rank == KING
   
   def completeMove(self, dest):
     '''
@@ -287,7 +298,7 @@ class Model:
     target.extend(self.selection)
     #while len(source) > self.moveIndex:
       #source.pop()
-    source = source[:self.moveIndex]
+    source[:] = source[:self.moveIndex]
     self.undoStack.append((self.moveOrigin, dest, len(self.selection)))
     self.flipTop(self.moveOrigin)
     self.selection = []
@@ -327,7 +338,7 @@ class Model:
       f.add(card)
     #for k in range(13):
       #w.pop()
-    w = w[:-13]
+    w[:] = w[:-13]
     self.flipTop(pile)
     self.undoStack.append((pile, i+10, 13))
     self.redoStack = []
@@ -370,7 +381,7 @@ class Model:
       source.extend(target[-n:])
       #for k in range(n):
         #target.pop()
-      target = target[:-n]
+      target[:] = target[:-n]
       self.redoStack.append((s,t,n))
   
   def undeal(self):
@@ -399,7 +410,7 @@ class Model:
       target.extend(source[-n:])
       #for k in range(n):
         #source.pop()
-      source = source[:-n]  
+      source[:] = source[:-n]  
     self.undoStack.append((s,t,n))
     
     try:
@@ -419,14 +430,14 @@ class Model:
     
   def save(self, filename):
     with open(filename, 'wb') as fn:
-      pickle.dump((self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, self.waste), fn)
+      pickle.dump((self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, self.waste, self.circular, self.open), fn)
       
   def load(self, filename):
     '''
     Read a saved game from filename, reconstitute the game, and display it.
     '''
     with open(filename, 'rb') as fin:
-      self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, self.waste = pickle.load(fin) 
+      self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, self.waste, self.circular, self.open = pickle.load(fin) 
     
         
     

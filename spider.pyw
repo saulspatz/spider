@@ -11,7 +11,7 @@ the player takes it out.  Often, this can be used to great advantage in organizi
 from model import Model
 from view import View
 import tkinter as tk
-from tkinter.messagebox import showerror
+from tkinter.messagebox import showerror, showinfo
 from datetime import datetime
 import sys, os
 from utils import ScrolledList
@@ -145,18 +145,19 @@ class LoadFileDialog:
 class Spider:
   def __init__(self):
     self.model = Model()
-    self.view = View(self, 1000, 1000) 
+    self.view = View(self, 1000, 2000) 
     self.makeHelp()
-    self.circular = tk.IntVar()
-    self.showall = tk.IntVar()  # for open spider 
-    self.circular.set(0)
-    self.showall.set(0)
+    self.circular = tk.BooleanVar()
+    self.open = tk.BooleanVar() 
+    self.circular.set(False)
+    self.open.set(False)
+    self.circular.trace('w', self.optionChanged)
+    self.open.trace('w', self.optionChanged)
     self.makeMenu()
     self.view.start()      #  start the event loop
-    
-    
+        
   def deal(self):
-    self.model.deal()
+    self.model.deal(self.circular.get(), self.open.get())
     self.view.show()
     
   def makeHelp(self):
@@ -188,13 +189,13 @@ class Spider:
     game = tk.Menu(top, tearoff=False)
     game.add_command(label='New', command=self.deal)
     game.add_command(label='Save', command=self.save)
-    game.add_command(label='Open', command=self.open)
+    game.add_command(label='Open', command=self.load)
     game.add_command(label='Quit', command=self.notdone)
     top.add_cascade(label='Game', menu=game, underline=0)
        
     options = tk.Menu(top, tearoff=False)
     options.add_checkbutton(label='Circular', variable=self.circular)
-    options.add_checkbutton(label='Open',  variable=self.showall)
+    options.add_checkbutton(label='Open',  variable=self.open)
     top.add_cascade(label='Options', menu=options, underline=0)
 
     stats = tk.Menu(top, tearoff=True)
@@ -215,7 +216,7 @@ class Spider:
     saveFile = os.path.join(dataDir, now+'.spi')
     self.model.save(saveFile)
     
-  def open(self):
+  def load(self):
     dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
     if not os.path.exists(dataDir):
       showerror('No Files to Open', 'Directory\n%s\ndoes not exist'%dataDir)
@@ -227,6 +228,9 @@ class Spider:
   def showHelp(self):
     self.helpText.deiconify()
     self.helpText.text.see('1.0')  
+  
+  def optionChanged(self, *args):
+    showinfo("Option Changed", "Changes Will Take Effect Next Game")
       
 if __name__ == "__main__":
   Spider()
