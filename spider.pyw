@@ -147,8 +147,13 @@ class Spider:
     self.model = Model()
     self.view = View(self, 1000, 1000) 
     self.makeHelp()
+    self.circular = tk.IntVar()
+    self.showall = tk.IntVar()  # for open spider 
+    self.circular.set(0)
+    self.showall.set(0)
     self.makeMenu()
     self.view.start()      #  start the event loop
+    
     
   def deal(self):
     self.model.deal()
@@ -188,7 +193,8 @@ class Spider:
     top.add_cascade(label='Game', menu=game, underline=0)
        
     options = tk.Menu(top, tearoff=False)
-    options.add_command(label='Circular', command=self.notdone,  underline=0)
+    options.add_checkbutton(label='Circular', variable=self.circular)
+    options.add_checkbutton(label='Open',  variable=self.showall)
     top.add_cascade(label='Options', menu=options, underline=0)
 
     stats = tk.Menu(top, tearoff=True)
