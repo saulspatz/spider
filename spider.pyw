@@ -145,7 +145,7 @@ class LoadFileDialog:
 class Spider:
   def __init__(self):
     self.model = Model()
-    self.view = View(self, 1000, 2000) 
+    self.view = View(self, 950, 1000, scrollregion=(0, 0, 950, 3000) )
     self.makeHelp()
     self.circular = tk.BooleanVar()
     self.open = tk.BooleanVar() 

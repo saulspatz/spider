@@ -43,7 +43,8 @@ class View:
   crucial, since only canvas items tagged "card" will respond to mouse
   clicks.
   '''
-  def __init__(self, parent, width, height):
+  def __init__(self, parent, width, height, **kwargs):
+    # kwargs passed to Scrolled Canvas
     self.parent = parent          # parent is the Spider application
     self.model =  parent.model
     self.root = root = tk.Tk()
@@ -65,7 +66,7 @@ class View:
     for k in range(10):
       self.waste.append((x, y)) 
       x += XSPACING 
-    tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL)
+    tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL, **kwargs)
     tableau.pack(expand = tk.YES, fill=tk.BOTH) 
     
     self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
@@ -262,7 +263,7 @@ class View:
     right = left + CARDWIDTH
     
     def findDestInArray(seq):
-      if event.y < seq[0][1]:
+      if canvas.canvasy(event.y) < seq[0][1]:
         return -1      
       for k, w in enumerate(seq):
         west = w[0]       
