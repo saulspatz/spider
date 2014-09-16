@@ -34,6 +34,9 @@ BUTTON = 'forest green'
 DEFAULT_CURSOR = 'arrow'
 SELECT_CURSOR = 'hand2'
 
+OPTION_FONT = ('Helvetica', '12', 'normal')
+OPTION_BG = 'gray'
+
 imageDict = {}   # hang on to images, or they may disappear!
 
 class View: 
@@ -66,8 +69,13 @@ class View:
       self.waste.append((x, y)) 
       x += XSPACING 
     tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL)
+    options = tk.Frame(root, bg = OPTION_BG)
+    self.circular = tk.Label(options, text = " Circular ", relief = tk.RIDGE, font = OPTION_FONT,  bg = OPTION_BG, fg = 'Black', bd = 2)
+    self.open =     tk.Label(options, text = " Open     ", relief = tk.RIDGE, font = OPTION_FONT, bg = OPTION_BG, fg = 'Black', bd = 2)
+    self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
+    self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
+    options.pack(expand = tk.YES, fill = tk.X)
     tableau.pack(expand = tk.YES, fill=tk.BOTH) 
-    
     self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
                                           fill = BUTTON, outline = BUTTON, tag = "undo")
     self.redoButton = tableau.create_oval(width//2+4*MARGIN, MARGIN, width//2+10*MARGIN, 4*MARGIN, 
@@ -143,7 +151,11 @@ class View:
     if model.canRedo():
       self.enableRedo()
     else:
-      self.disableRedo()   
+      self.disableRedo() 
+    color = 'Black' if model.circular else OPTION_BG
+    self.circular.configure(fg=color)
+    color = 'Black' if model.open else OPTION_BG
+    self.open.configure(fg=color)    
     color = CELEBRATE if model.win() else BACKGROUND
     canvas.itemconfigure('winText', fill=color)
     
