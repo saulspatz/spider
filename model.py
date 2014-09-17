@@ -221,8 +221,8 @@ class Model:
     for n in range(10):
       card = self.stock.pop()
       self.waste[n].add(card, True)
-    self.undoStack.append(DEAL)
     if not redo:
+      self.undoStack.append(DEAL)
       self.redoStack = []
       
   def canDeal(self):
