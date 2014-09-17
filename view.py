@@ -76,7 +76,7 @@ class View:
     self.open =     tk.Label(options, text = " Open     ", relief = tk.RIDGE, font = OPTION_FONT, bg = OPTION_BG, fg = 'Black', bd = 2)
     self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
-    tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL, **kwargs)
+    tableau = self.tableau = ScrolledCanvas(root, width=width, height=height, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
     options.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
     tableau.pack(expand=tk.YES, fill=tk.Y)
    
