@@ -46,8 +46,7 @@ class ScrolledCanvas(tk.Frame):
   
   def __init__(self, master, width, height, bg, cursor, scrolls, **kwargs):
     tk.Frame.__init__(self, master)
-    canv = self.canvas = tk.Canvas(self, bg=bg, relief=tk.SUNKEN, **kwargs)
-    canv.config(width=width, height=height)           # display area size
+    canv = self.canvas = tk.Canvas(self, width=width, height=height, bg=bg, relief=tk.SUNKEN, **kwargs)
     canv.config(highlightthickness=0)                 # no pixels to border
     canv.grid(row = 0, column = 0, sticky = 'news')
     

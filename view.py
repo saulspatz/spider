@@ -51,6 +51,7 @@ class View:
     self.parent = parent          # parent is the Spider application
     self.model =  parent.model
     self.root = root = tk.Tk()
+    root.resizable(height=True, width=False)
     self.root.wm_geometry('950x800-10+10')
     root.title("Spider Solitaire")
     self.menu = tk.Menu(root)         # parent constructs actual menu         
@@ -75,9 +76,9 @@ class View:
     self.open =     tk.Label(options, text = " Open     ", relief = tk.RIDGE, font = OPTION_FONT, bg = OPTION_BG, fg = 'Black', bd = 2)
     self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
-    options.pack(expand = tk.YES, fill = tk.X)
     tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL, **kwargs)
-    tableau.pack(expand = tk.YES, fill=tk.BOTH) 
+    tableau.grid(row = 1, column = 0, sticky="ns") 
+    options.grid(row = 0, column = 0, stick='w')
     self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
                                           fill = BUTTON, outline = BUTTON, tag = "undo")
     self.redoButton = tableau.create_oval(width//2+4*MARGIN, MARGIN, width//2+10*MARGIN, 4*MARGIN, 
