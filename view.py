@@ -211,7 +211,7 @@ class View:
       x, y = event.x, event.y
       dx, dy = x - self.mouseX, y - self.mouseY
       self.mouseX, self.mouseY = x, y
-      self.tableau.move('floating', dx, dy)
+      self.tableau.canvas.move('floating', dx, dy)
     except AttributeError:
       pass
   
@@ -221,7 +221,7 @@ class View:
     Clicks on foundation piles are ignored.
     '''
     model = self.model
-    canvas = self.tableau
+    canvas = self.tableau.canvas
     tag = [t for t in canvas.gettags('current') if t.startswith('code')][0]
     code = int(tag[4:])             # code of the card clicked
     if model.stock.find(code) != -1:
@@ -245,7 +245,7 @@ class View:
     the suit will be move to the first available foundation pile.
     '''
     model = self.model
-    canvas = self.tableau
+    canvas = self.tableau.canvas
     tag = [t for t in canvas.gettags('current') if t.startswith('code')][0]
     code = int(tag[4:])             # code of the card clicked
     for k, w in enumerate(model.waste):
