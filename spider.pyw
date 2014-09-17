@@ -62,7 +62,9 @@ class FileList(ScrolledList):
   def __init__(self, parent, dataDir, **kwargs):
     super().__init__(parent, [], **kwargs)
     files = (f[:-4] for f in os.listdir(dataDir) if f.endswith('.spi'))
-    dates = [datetime.strptime(f, FMT).strftime(FMT2) for f in files]        
+    dates = [datetime.strptime(f, FMT) for f in files]
+    dates.sort()
+    dates =[d.strftime(FMT2) for d in dates]
     self.listbox.insert(0, *dates)
     self.listbox.see(tk.END)
     self.listbox.selection_set(tk.END)
