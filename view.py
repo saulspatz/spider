@@ -77,8 +77,9 @@ class View:
     self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     tableau = self.tableau = ScrolledCanvas(root, width, height, BACKGROUND, DEFAULT_CURSOR, tk.VERTICAL, **kwargs)
-    tableau.grid(row = 1, column = 0, sticky="ns") 
-    options.grid(row = 0, column = 0, stick='w')
+    options.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
+    tableau.pack(expand=tk.YES, fill=tk.Y)
+   
     self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
                                           fill = BUTTON, outline = BUTTON, tag = "undo")
     self.redoButton = tableau.create_oval(width//2+4*MARGIN, MARGIN, width//2+10*MARGIN, 4*MARGIN, 
