@@ -34,8 +34,8 @@ BUTTON = 'forest green'
 DEFAULT_CURSOR = 'arrow'
 SELECT_CURSOR = 'hand2'
 
-OPTION_FONT = ('Helvetica', '12', 'normal')
-OPTION_BG = 'gray'
+STATUS_FONT = ('Helvetica', '12', 'normal')
+STATUS_BG = 'gray'
 
 imageDict = {}   # hang on to images, or they may disappear!
 
@@ -71,13 +71,17 @@ class View:
       self.waste.append((x, y)) 
       x += XSPACING 
 
-    options = tk.Frame(root, bg = OPTION_BG)
-    self.circular = tk.Label(options, text = " Circular ", relief = tk.RIDGE, font = OPTION_FONT,  bg = OPTION_BG, fg = 'Black', bd = 2)
-    self.open =     tk.Label(options, text = " Open     ", relief = tk.RIDGE, font = OPTION_FONT, bg = OPTION_BG, fg = 'Black', bd = 2)
+    status = tk.Frame(root, bg = STATUS_BG)
+    self.circular = tk.Label(status, text = " Circular ", relief = tk.RIDGE, font = STATUS_FONT,  bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.open =     tk.Label(status, text = " Open     ", relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.deals =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.moves =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
     self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
+    self.deals.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
+    self.moves.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     tableau = self.tableau = ScrolledCanvas(root, width=width, height=height, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
-    options.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
+    status.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
     tableau.pack(expand=tk.YES, fill=tk.Y)
    
     self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
@@ -156,12 +160,14 @@ class View:
       self.enableRedo()
     else:
       self.disableRedo() 
-    color = 'Black' if model.circular else OPTION_BG
+    color = 'Black' if model.circular else STATUS_BG
     self.circular.configure(fg=color)
-    color = 'Black' if model.open else OPTION_BG
+    color = 'Black' if model.open else STATUS_BG
     self.open.configure(fg=color)    
     color = CELEBRATE if model.win() else BACKGROUND
     canvas.itemconfigure('winText', fill=color)
+    self.deals.configure(text=model.dealsLeft())
+    self.moves.configure(text=model.moves())
     
   def dealUp(self):
     self.model.dealUp()

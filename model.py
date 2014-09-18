@@ -438,6 +438,13 @@ class Model:
     '''
     with open(filename, 'rb') as fin:
       self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, self.waste, self.circular, self.open = pickle.load(fin) 
+      
+  def dealsLeft(self):
+    return len(self.stock) // 10
+  
+  def moves(self):
+    return len([m for m in self.undoStack if m[0] != m[1]])
+  
     
         
     
