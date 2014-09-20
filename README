@@ -5,7 +5,8 @@ Also, they use the protocol that when the player completes a suits from King to 
 automatically taken out of play immediately. The rule is that it remains in play until
 the player takes it out.  Often, this can be used to great advantage in organizing other piles.
 
-Also, I plan to add a couple of variants that make the game easier, other than the simple-minded
+I've added a couple of variants that make the game easier, different from the simple-minded
 two-suit or one-suit version one usually sees.  One is circular spider, where a King can be placed
-on an Ace, and the other is open spider where all cards are initially dealt face up.  And, I 
-suppose, open circular spider.
+on an Ace, and the other is open spider where all cards are initially dealt face up.  I've also added 
+open circular, combining both variants, but this is hardly necessary; so far as I can recall, I've
+never lost the circular game.

@@ -9,7 +9,7 @@ automatically taken out of play immediately. The rule is that it remains in play
 the player takes it out.  Often, this can be used to great advantage in organizing other piles.
 '''
 from model import Model
-from view import View
+from view import View, StatsDialog
 import tkinter as tk
 from tkinter.messagebox import showerror, showinfo
 from datetime import datetime
@@ -87,8 +87,8 @@ class LoadFileDialog:
     self.root.iconname(title)
     frame = tk.Frame(self.root)
     frame.pack()        
-    self.list = FileList(frame, dataDir, **kwargs)
-    self.list.pack(expand=1, fill=tk.BOTH)
+    self.listbox = FileList(frame, dataDir, **kwargs)
+    self.listbox.pack(expand=1, fill=tk.BOTH)
     self.cancel = cancel
     self.okay = okay
     for num in range(len(buttons)):
@@ -140,14 +140,14 @@ class LoadFileDialog:
 
   def done(self, num):
     if num == self.okay:
-      item = self.list.get(tk.ACTIVE)
+      item = self.listbox.get(tk.ACTIVE)
       self.answer = datetime.strptime(item, FMT2).strftime(FMT) + '.spi'
     self.root.quit()
   
 class Spider:
   def __init__(self):
     self.model = Model()
-    self.view = View(self, 950, 1000, scrollregion=(0, 0, 950, 3000) )
+    self.view = View(self, self.quit, width=950, height=1000, scrollregion=(0, 0, 950, 3000) )
     self.makeHelp()
     self.circular = tk.BooleanVar()
     self.open = tk.BooleanVar() 
@@ -159,7 +159,9 @@ class Spider:
     self.view.start()      #  start the event loop
         
   def deal(self):
-    self.model.deal(self.circular.get(), self.open.get())
+    model = self.model
+    self.saveStats()
+    model.deal(self.circular.get(), self.open.get())
     self.view.show()
     
   def makeHelp(self):
@@ -184,7 +186,6 @@ class Spider:
     top.rowconfigure(0, weight=1)
     text.insert(tk.INSERT,helpText)
     
-    
   def makeMenu(self):
     top = self.view.menu
     
@@ -192,20 +193,20 @@ class Spider:
     game.add_command(label='New', command=self.deal)
     game.add_command(label='Save', command=self.save)
     game.add_command(label='Open', command=self.load)
-    game.add_command(label='Quit', command=self.notdone)
-    top.add_cascade(label='Game', menu=game, underline=0)
+    game.add_command(label='Quit', command=self.quit)
+    top.add_cascade(label='Game', menu=game)
        
     options = tk.Menu(top, tearoff=False)
     options.add_checkbutton(label='Circular', variable=self.circular)
     options.add_checkbutton(label='Open',  variable=self.open)
-    top.add_cascade(label='Options', menu=options, underline=0)
+    top.add_cascade(label='Options', menu=options)
 
-    stats = tk.Menu(top, tearoff=True)
-    stats.add_command(label='Display Stats', command=self.notdone, underline=0)
-    stats.add_command(label='Clear Stats', command=self.notdone,  underline=0)
-    top.add_cascade(label='Stats',   menu=stats,     underline=0)
+    stats = tk.Menu(top, tearoff=False)
+    stats.add_command(label='Display Stats', command=self.showStats)
+    stats.add_command(label='Clear Stats', command=self.notdone)
+    top.add_cascade(label='Stats',   menu=stats)
        
-    top.add_command(label='Help', command = self.showHelp, underline = 0)  
+    top.add_command(label='Help', command = self.showHelp)  
      
   def notdone(self):
     showerror('Not implemented', 'Not yet available') 
@@ -233,6 +234,56 @@ class Spider:
   
   def optionChanged(self, *args):
     showinfo("Option Changed", "Changes Will Take Effect Next Game")
+    
+  def saveStats(self):
+    model = self.model
+    if model.stock:      # not all cards dealt means game abandoned
+      return                 # don't save stats
+    stats = model.stats()
+    with open(os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt'), 'a') as fout:
+      fout.write('%s %s %s %s %s %s\n' % stats)  
+      
+  def loadStats(self):
+    '''
+    Returns None if no stats file found, or [] for empty stats file.
+    Retuns a list containing individuals stats and summaries, sorted
+    by type, in reverse order of date.
+    '''
+    try:
+      Stats = Model.Stats
+      with open(os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt')) as fin:
+        stats = [Stats(*s.split()) for s in fin.readlines()]
+      std = [stat for stat in stats if stat.variant=='Standard']
+      circ = [stat for stat in stats if stat.variant == 'Circular']
+      show = [stat for stat in stats if stat.variant == 'Open']
+      both = [stat for stat in stats if stat.variant == 'Both']
+      stats = []
+      for s in (std, circ, show, both):
+        if s:
+          stats.append(self.summary(s)) 
+      return stats
+    except IOError:
+      return None
+    
+  def summary(self, stats):
+    '''
+    Pre: stats is not empty
+    '''
+    variant = stats[0][0] 
+    games = len(stats)
+    wins = len([s for s in stats if s.win== 'True'])
+    moves = sum([int(s.moves) for s in stats]) // games
+    up = sum([int(s.up) for s in stats]) // games
+    up1 = sum([int(s.up1) for s in stats]) // games
+    return  Model.SummaryStats(variant, games, wins, moves, up, up1)
+  
+  def showStats(self):
+    stats = self.loadStats()
+    self.view.showStats(stats)
+
+  def quit(self):
+    self.saveStats()
+    self.view.root.quit()
       
 if __name__ == "__main__":
   Spider()

@@ -9,6 +9,7 @@ import tkinter as tk
 from model import SUITNAMES, RANKNAMES, ALLRANKS, Card
 from tkinter.messagebox import showerror
 from utils import ScrolledCanvas
+from tkinter.simpledialog import SimpleDialog
 
 # Constants determining the size and layout of cards and stacks.  We
 # work in a grid where each stack is surrounded by MARGIN
@@ -35,6 +36,7 @@ DEFAULT_CURSOR = 'arrow'
 SELECT_CURSOR = 'hand2'
 
 STATUS_FONT = ('Helvetica', '12', 'normal')
+STATS_FONT = ('Courier', '12', 'normal')
 STATUS_BG = 'gray'
 
 imageDict = {}   # hang on to images, or they may disappear!
@@ -46,11 +48,13 @@ class View:
   crucial, since only canvas items tagged "card" will respond to mouse
   clicks.
   '''
-  def __init__(self, parent, width, height, **kwargs):
+  def __init__(self, parent, quit, **kwargs):
     # kwargs passed to Scrolled Canvas
+    # quit is function to call when main window is closed
     self.parent = parent          # parent is the Spider application
     self.model =  parent.model
     self.root = root = tk.Tk()
+    root.protocol('WM_DELETE_WINDOW', quit)
     root.resizable(height=True, width=False)
     self.root.wm_geometry('950x800-10+10')
     root.title("Spider Solitaire")
@@ -80,10 +84,11 @@ class View:
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.deals.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     self.moves.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
-    tableau = self.tableau = ScrolledCanvas(root, width=width, height=height, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
+    tableau = self.tableau = ScrolledCanvas(root, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
     status.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
     tableau.pack(expand=tk.YES, fill=tk.Y)
-   
+    width = kwargs['width']
+    height = kwargs['height']
     self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
                                           fill = BUTTON, outline = BUTTON, tag = "undo")
     self.redoButton = tableau.create_oval(width//2+4*MARGIN, MARGIN, width//2+10*MARGIN, 4*MARGIN, 
@@ -351,10 +356,33 @@ class View:
   def disableUndo(self):
     self.tableau.itemconfigure('undo', state=tk.HIDDEN)
   
-
   def enableRedo(self):
     self.tableau.itemconfigure('redo', state=tk.NORMAL)
   
-    
   def enableUndo(self):
     self.tableau.itemconfigure('undo', state=tk.NORMAL)
+    
+  def showStats(self, stats):
+    StatsDialog(self.root, stats)
+    
+class StatsDialog(SimpleDialog):
+  def __init__(self, top, stats):
+    # stats is a Model.SummaryStats
+    super().__init__(top, text='', buttons = ["Dismiss"], default = 0, cancel = 0, title = 'Spider Stats')
+    text = '    Variant   Games Wins Moves Up Up1\n\n'
+    for stat in stats:
+      if stat.variant== 'Both':
+        stat = stat._replace(variant='Open Circular')
+      text += '%-13s%6d%5d%6d%3d%4d\n' %stat
+      
+    text += '\n"Up" column gives total number of face\ndown cards turned up.\n'
+    text += '"Up1" column gives number of cards\nturned up on initial deal.\n'
+    self.message.configure(font=STATS_FONT, text = text)
+      
+  def wm_delete_window(self):
+      self.root.destroy()
+
+  def done(self, num):
+      self.root.destroy()    
+    
+      

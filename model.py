@@ -1,6 +1,8 @@
 # model.py Model for spider solitaire
 
 import random, itertools, pickle
+from datetime import date
+from collections import namedtuple
 
 ACE = 1
 JACK = 11
@@ -445,12 +447,31 @@ class Model:
   def moves(self):
     return len([m for m in self.undoStack if m[0] != m[1]])
   
+  Stats = namedtuple('Stats', ['variant', 'win', 'moves', 'up', 'up1', 'date'])
+  SummaryStats = namedtuple('SummaryStats', ['variant', 'games', 'win', 'moves', 'up', 'up1'])
+
+  def stats(self):
+    # variant is 'Standard,' 'Circular', 'Open', or 'Both'
+    # win is boolean
+    # Moves is number of moves made
+    # up is total face down cards turned up
+    # upFirst is cards turned up on first deal
     
-        
+    date = date.today().strftime('%x')
+    circ = self.circular
+    op = self.open
+    if not circ:
+      variant = 'Standard' if not op else 'Open'
+    else:
+      variant = 'Circular' if not op else 'Both'
+    win = self.win()
+    moves = self.moves()
+    spec = [m for m in self.undoStack if m[0] == m[1]]
+    up = len([m for m in spec if m[2] == 0] )
+    upFirst = len(tuple(takewhile(lambda m: m[2] == 0, spec)))
+    return Stats(variant, win, moves, up, upFirst, date)
+  
+      
     
-      
-      
-      
-      
+  
     
-                  
