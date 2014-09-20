@@ -36,7 +36,7 @@ DEFAULT_CURSOR = 'arrow'
 SELECT_CURSOR = 'hand2'
 
 STATUS_FONT = ('Helvetica', '12', 'normal')
-STATS_FONT = ('Courier', '12', 'normal')
+STATS_FONT = ('Courier', '12', 'normal')   # fixed-width font
 STATUS_BG = 'gray'
 
 imageDict = {}   # hang on to images, or they may disappear!
@@ -363,7 +363,12 @@ class View:
     self.tableau.itemconfigure('undo', state=tk.NORMAL)
     
   def showStats(self, stats):
-    StatsDialog(self.root, stats)
+    if stats == None:
+      showerror('No Stats File'. os.path.join(sys.argv[0], 'stats.txt') + ' does not exist.')
+    elif stats == []:
+      showerror('No Stats to Display'. os.path.join(sys.argv[0], 'stats.txt') + ' is empty.')
+    else:    
+      StatsDialog(self.root, stats)
     
 class StatsDialog(SimpleDialog):
   def __init__(self, top, stats):
