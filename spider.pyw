@@ -11,7 +11,7 @@ the player takes it out.  Often, this can be used to great advantage in organizi
 from model import Model
 from view import View, StatsDialog
 import tkinter as tk
-from tkinter.messagebox import showerror, showinfo
+from tkinter.messagebox import showerror, showinfo, askokcancel
 from datetime import datetime
 import sys, os
 from utils import ScrolledList
@@ -203,7 +203,7 @@ class Spider:
 
     stats = tk.Menu(top, tearoff=False)
     stats.add_command(label='Display Stats', command=self.showStats)
-    stats.add_command(label='Clear Stats', command=self.notdone)
+    stats.add_command(label='Clear Stats', command=self.clearStats)
     top.add_cascade(label='Stats',   menu=stats)
        
     top.add_command(label='Help', command = self.showHelp)  
@@ -280,6 +280,10 @@ class Spider:
   def showStats(self):
     stats = self.loadStats()
     self.view.showStats(stats)
+    
+  def clearStats(self):
+    if askokcancel("Confirm Clear Stats", "Do you really want to erase all stats to date?"): 
+      open(os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt'), 'w').close()
 
   def quit(self):
     self.saveStats()

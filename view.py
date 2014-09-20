@@ -364,9 +364,9 @@ class View:
     
   def showStats(self, stats):
     if stats == None:
-      showerror('No Stats File'. os.path.join(sys.argv[0], 'stats.txt') + ' does not exist.')
+      showerror('No Stats File', os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt') + ' does not exist.')
     elif stats == []:
-      showerror('No Stats to Display'. os.path.join(sys.argv[0], 'stats.txt') + ' is empty.')
+      showerror('No Stats to Display', os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt') + ' is empty.')
     else:    
       StatsDialog(self.root, stats)
     
