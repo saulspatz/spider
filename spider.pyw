@@ -8,7 +8,7 @@ Also, they use the protocol that when the player completes a suits from King to 
 automatically taken out of play immediately. The rule is that it remains in play until
 the player takes it out.  Often, this can be used to great advantage in organizing other piles.
 '''
-from model import Model
+from model import Model, Stats, SummaryStats
 from view import View, StatsDialog
 import tkinter as tk
 from tkinter.messagebox import showerror, showinfo, askokcancel
@@ -250,7 +250,6 @@ class Spider:
     by type, in reverse order of date.
     '''
     try:
-      Stats = Model.Stats
       with open(os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt')) as fin:
         stats = [Stats(*s.split()) for s in fin.readlines()]
       std = [stat for stat in stats if stat.variant=='Standard']
@@ -275,7 +274,7 @@ class Spider:
     moves = sum([int(s.moves) for s in stats]) // games
     up = sum([int(s.up) for s in stats]) // games
     up1 = sum([int(s.up1) for s in stats]) // games
-    return  Model.SummaryStats(variant, games, wins, moves, up, up1)
+    return  SummaryStats(variant, games, wins, moves, up, up1)
   
   def showStats(self):
     stats = self.loadStats()
