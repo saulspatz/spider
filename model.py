@@ -205,6 +205,7 @@ class Model:
     self.dealUp()
     self.undoStack = []
     self.redoStack = []    
+    self.statsSaved = False
     
   def dealDown(self):
     '''
@@ -432,15 +433,18 @@ class Model:
     
   def save(self, filename):
     with open(filename, 'wb') as fn:
-      pickle.dump((self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, self.waste, self.circular, self.open), fn)
+      pickle.dump((self.deck, self.undoStack, self.redoStack, self.stock, self.foundations,
+                          self.waste, self.circular, self.open, self.statsSaved), fn)
       
   def load(self, filename):
     '''
-    Read a saved game from filename, reconstitute the game, and display it.
+    Read a saved game from filename
     '''
     with open(filename, 'rb') as fin:
-      self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, self.waste, self.circular, self.open = pickle.load(fin) 
-      
+      (self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, 
+       self.waste, self.circular, self.open, self.statsSaved) = pickle.load(fin)
+    self.statsSaved = True
+    
   def dealsLeft(self):
     return len(self.stock) // 10
   

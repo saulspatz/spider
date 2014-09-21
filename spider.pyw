@@ -212,12 +212,13 @@ class Spider:
     showerror('Not implemented', 'Not yet available') 
       
   def save(self):
+    model = self.model
     now = datetime.today().strftime(FMT)
     dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
     if not os.path.exists(dataDir):
       os.mkdir(dataDir)
     saveFile = os.path.join(dataDir, now+'.spi')
-    self.model.save(saveFile)
+    model.save(saveFile)
     
   def load(self):
     dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
@@ -237,8 +238,11 @@ class Spider:
     
   def saveStats(self):
     model = self.model
-    if model.stock:      # not all cards dealt means game abandoned
-      return                 # don't save stats
+    if model.stock:             # not all cards dealt means game abandoned
+      return                     
+    if model.statsSaved:    # don't save sats for same game twice
+      return
+    model.statsSaved = True
     stats = model.stats()
     with open(os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt'), 'a') as fout:
       fout.write('%s %s %s %s %s %s\n' % stats)  
@@ -246,8 +250,7 @@ class Spider:
   def loadStats(self):
     '''
     Returns None if no stats file found, or [] for empty stats file.
-    Retuns a list containing individuals stats and summaries, sorted
-    by type, in reverse order of date.
+    Retuns a list containing summary stats.
     '''
     try:
       with open(os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt')) as fin:
