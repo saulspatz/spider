@@ -299,8 +299,6 @@ class Model:
     moving = self.selection
     target = self.waste[dest] if dest < 10 else self.foundations[dest-10]
     target.extend(self.selection)
-    #while len(source) > self.moveIndex:
-      #source.pop()
     source[:] = source[:self.moveIndex]
     self.undoStack.append((self.moveOrigin, dest, len(self.selection)))
     self.flipTop(self.moveOrigin)
@@ -339,8 +337,6 @@ class Model:
       if f.isEmpty(): break
     for  card in w[-13:]:
       f.add(card)
-    #for k in range(13):
-      #w.pop()
     w[:] = w[:-13]
     self.flipTop(pile)
     self.undoStack.append((pile, i+10, 13))
@@ -382,8 +378,6 @@ class Model:
       target = self.waste[t] if t < 10 else self.foundations[t-10]
       assert len(target) >= n
       source.extend(target[-n:])
-      #for k in range(n):
-        #target.pop()
       target[:] = target[:-n]
       self.redoStack.append((s,t,n))
   
@@ -411,8 +405,6 @@ class Model:
       target = self.waste[t] if t < 10 else self.foundations[t-10]
       assert n <= len(source)
       target.extend(source[-n:])
-      #for k in range(n):
-        #source.pop()
       source[:] = source[:-n]  
     self.undoStack.append((s,t,n))
     
@@ -450,6 +442,9 @@ class Model:
   
   def moves(self):
     return len([m for m in self.undoStack if m[0] != m[1]])
+  
+  def downCards(self):
+    return sum([self.downUp(k)[0] for k in range(10)])
 
   def stats(self):
     # variant is 'Standard,' 'Circular', 'Open', or 'Both'

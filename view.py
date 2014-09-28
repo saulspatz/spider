@@ -79,10 +79,12 @@ class View:
     self.circular = tk.Label(status, text = " Circular ", relief = tk.RIDGE, font = STATUS_FONT,  bg = STATUS_BG, fg = 'Black', bd = 2)
     self.open =     tk.Label(status, text = " Open     ", relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
     self.deals =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.down =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
     self.moves =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
     self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.deals.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
+    self.down.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     self.moves.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     tableau = self.tableau = ScrolledCanvas(root, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
     status.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
@@ -171,8 +173,9 @@ class View:
     self.open.configure(fg=color)    
     color = CELEBRATE if model.win() else BACKGROUND
     canvas.itemconfigure('winText', fill=color)
-    self.deals.configure(text=model.dealsLeft())
-    self.moves.configure(text=model.moves())
+    self.deals.configure(text='Deals %d'%model.dealsLeft())
+    self.down.configure(text='Down %d'%model.downCards())
+    self.moves.configure(text='Moves %d'%model.moves())
     
   def dealUp(self):
     self.model.dealUp()
