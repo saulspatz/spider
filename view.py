@@ -108,6 +108,8 @@ class View:
     tableau.canvas.bind('<Button-4>', self.scroll)
     tableau.canvas.bind('<Button-5>', self.scroll)
     tableau.canvas.bind('<MouseWheel>', self.scroll)
+    for w in self.waste:
+          tableau.create_rectangle(w[0], w[1], w[0]+CARDWIDTH, w[1]+CARDHEIGHT, outline = OUTLINE)    
     for f in self.foundations:
       tableau.create_rectangle(f[0], f[1], f[0]+CARDWIDTH, f[1]+CARDHEIGHT, outline = OUTLINE)
     tableau.create_text(self.foundations[0][0], self.foundations[0][1]+CARDHEIGHT, 
