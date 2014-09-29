@@ -105,6 +105,9 @@ class View:
     tableau.canvas.bind('<ButtonRelease-1>', self.onDrop)
     tableau.tag_bind('undo', '<ButtonPress-1>', self.undo)
     tableau.tag_bind('redo', '<ButtonPress-1>', self.redo)
+    tableau.canvas.bind('<Button-4>', self.scroll)
+    tableau.canvas.bind('<Button-5>', self.scroll)
+    tableau.canvas.bind('<MouseWheel>', self.scroll)
     for f in self.foundations:
       tableau.create_rectangle(f[0], f[1], f[0]+CARDWIDTH, f[1]+CARDHEIGHT, outline = OUTLINE)
     tableau.create_text(self.foundations[0][0], self.foundations[0][1]+CARDHEIGHT, 
@@ -270,6 +273,25 @@ class View:
       return 
     model.completeSuit(k, idx)
     self.show()
+    
+  def scroll(self, event):
+    '''
+    Use the mouse wheel to scroll the canvas.
+    If we are dragging cards, they must be moved in the same direction
+    as the canvas scrolls, or the cursor will become separated from the
+    cards being dragged.  
+    '''
+    canvas = self.tableau.canvas
+    lo, hi = canvas.yview()
+    height = int(canvas['scrollregion'].split()[3])
+    if event.num == 5 or event.delta < 0:       
+      n = 1
+    elif event.num == 4 or event.delta > 0:     
+      n = -1
+    canvas.yview_scroll(n, tk.UNITS)
+    lo2, hi2 = canvas.yview()
+    canvas.move('floating', 0, (hi2-hi) * height)
+    
    
   def onDrop(self, event):
     '''
