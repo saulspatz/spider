@@ -298,9 +298,11 @@ class View:
   def onDrop(self, event):
     '''
     Drop the selected cards.  In order to recognize the destination waste pile,
-    the y value of the cursor position must be below the top of the waste piles,
-    and either the left edge of the floating cards must be in the left half of the
-    pile, or the right edge must be in the right half.
+    the top of the cards being drageed must be below the bottom edge of
+    the foundation piles, and the cards being dragged must overlap a waste pile.
+    If they overlap two waste piles, both are considered, the one with more
+    overlap first.  If that is not a legal drop target then the other waste pile 
+    is considered.
     
     If the selection being dragged is a complete suit, the destination must be a
     foundation pile.
@@ -308,42 +310,50 @@ class View:
     model = self.model
     if not model.moving():
       return
-    canvas = self.tableau
+    canvas = self.tableau.canvas
     canvas.configure(cursor=DEFAULT_CURSOR)
     
-    f = canvas.find_withtag('floating')[0]
-    left = canvas.coords(f)[0]
-    right = left + CARDWIDTH
-    
-    def findDestInArray(seq):
-      if canvas.canvasy(event.y) < seq[0][1]:
-        return -1      
+    try:    
+      west, north, east, south = canvas.bbox(tk.CURRENT)
+    except TypeError:
+      pass                      # how can bbox(tk.CURRENT) give None?
+        
+    def findDestInArray(seq):   
       for k, w in enumerate(seq):
-        west = w[0]       
-        center = west + CARDWIDTH/2
-        east = west + CARDWIDTH
-        if (west <= left <= center) or (center <= right <= east):
-          return  k
-      return -1
-  
-    pile = findDestInArray(self.waste)
-    
-    if pile != -1:     # dropped on waste pile
-      if pile == model.moveOrigin:
-        self.abortMove()                      # dropped on source pile
-      elif not model.canDrop(pile):  
-        self.abortMove()                     # invalid destination
-      else:
+        left = w[0]       
+        right = left + CARDWIDTH - 1
+        if not (left <= west <= right or left <= east <= right ):
+          continue
+        overlap1 = min(right, east) - max(left, west)
+        try:
+          left = seq[k+1][0]
+        except IndexError:
+          return (k, )
+        right = left + CARDWIDTH - 1
+        overlap2 = min(right, east) - max(left, west)
+        if overlap2 <= 0:
+          return (k, )
+        if overlap1 > overlap2:
+          return (k, k+1)
+        return (k+1, k)
+      return tuple() 
+        
+    if north > self.foundations[0][1]+CARDHEIGHT:
+      for pile in findDestInArray(self.waste):
+        if pile == model.moveOrigin or not model.canDrop(pile):
+          continue
         self.completeMove(pile)
+        break
+      else:   # loop else
+        self.abortMove()
     elif model.movingCompleteSuit():
       #check for drop on foundation pile
-      pile = findDestInArray(self.foundations)
-      if pile != -1 and model.foundations[pile].isEmpty():
-        self.suitToFoundation(pile)
-      else:
+      for pile in findDestInArray(self.foundations):
+        if model.foundations[pile].isEmpty():
+          self.suitToFoundation(pile)
+          break
+      else:     # loop else
         self.abortMove()
-    else:
-      self.abortMove()
       
     self.show()
        
