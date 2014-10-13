@@ -261,7 +261,7 @@ class View:
   def onDoubleClick(self, event):
     '''
     If the user double clicks a card that is part of a complete suit,
-    the suit will be move to the first available foundation pile.
+    the suit will be moved to the first available foundation pile.
     '''
     model = self.model
     canvas = self.tableau.canvas
