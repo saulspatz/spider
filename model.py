@@ -300,8 +300,8 @@ class Model:
     target = self.waste[dest] if dest < 10 else self.foundations[dest-10]
     target.extend(self.selection)
     source[:] = source[:self.moveIndex]
-    self.undoStack.append((self.moveOrigin, dest, len(self.selection)))
     self.flipTop(self.moveOrigin)
+    self.undoStack.append((self.moveOrigin, dest, len(self.selection)))
     self.selection = []
     self.redoStack = []
     
