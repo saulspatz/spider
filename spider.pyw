@@ -222,13 +222,14 @@ class Spider:
     model.save(saveFile)
     
   def load(self):
-    dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
-    if not os.path.exists(dataDir):
-      showerror('No Files to Open', 'Directory\n%s\ndoes not exist'%dataDir)
-    filename = LoadFileDialog(self.view.root, dataDir, bg = 'lemonChiffon').go()
-    if  filename:
-      self.model.load(os.path.join(dataDir,filename))
-      self.view.show()
+    try:
+      dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
+      filename = LoadFileDialog(self.view.root, dataDir, bg = 'lemonChiffon').go()
+      if  filename:
+        self.model.load(os.path.join(dataDir,filename))
+        self.view.show()
+    except FileNotFoundError:
+      showerror('No Files to Open', 'Directory\n%s\ndoes not exist'%dataDir)      
       
   def showHelp(self):
     self.helpText.deiconify()
