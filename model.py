@@ -338,8 +338,8 @@ class Model:
     for  card in w[-13:]:
       f.add(card)
     w[:] = w[:-13]
-    self.flipTop(pile)
     self.undoStack.append((pile, i+10, 13))
+    self.flipTop(pile)
     self.redoStack = []
     return True
   
