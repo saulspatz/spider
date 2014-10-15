@@ -315,30 +315,21 @@ class Model:
     '''
     self.completeMove(dest)  
         
-  def completeSuit(self, pile, idx):
+  def completeSuit(self, pile):
     '''
-    *** Performs an action, and returns True (success) or False (failure).  ***
-    If pile contains a comple suit, and index indicates one of the 
-    top 13 cards, move the suit to the first available foundation,
-    and return True.  Otherwise, return False.
+    Does the pile have a complete suit, face up, sorted from King 
+    downwards, on top?
     '''
     w = self.waste[pile]
-    if len(w) < 13 or idx < len(w) - 13:
+    if len(w) < 13 or w[-13].faceDown():
       return False
+    return Card.isDescending(w[-13:])
+  
+  def firstFoundation(self):
+    # return index of first empty foundation pile
     
-    if w[-13].faceDown() :
-      return False
-    if not Card.isDescending(w[-13:]):
-        return False
-      
     for i, f in enumerate(self.foundations):
-      if f.isEmpty(): break
-    for  card in w[-13:]:
-      f.add(card)
-    w[:] = w[:-13]
-    self.undoStack.append(self.flipTop(pile, i+10, 13))
-    self.redoStack = []
-    return True
+      if f.isEmpty(): return i    
   
   def flipTop(self, src, target, n):
     '''

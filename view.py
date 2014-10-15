@@ -260,7 +260,7 @@ class View:
     
   def onDoubleClick(self, event):
     '''
-    If the user double clicks a card that is part of a complete suit,
+    If the user double clicks a pile with a complete suit face up on top,
     the suit will be moved to the first available foundation pile.
     '''
     model = self.model
@@ -268,12 +268,15 @@ class View:
     tag = [t for t in canvas.gettags('current') if t.startswith('code')][0]
     code = int(tag[4:])             # code of the card clicked
     for k, w in enumerate(model.waste):
-      idx = w.find(code)
-      if idx != -1:
+      if [card for card in w if card.code == code]:
         break
     else:       # loop else
       return 
-    model.completeSuit(k, idx)
+    if not model.completeSuit(k):
+      return
+    target = model.firstFoundation()
+    model.grab(k, len(w)-13)
+    model.selectionToFoundation(target)
     self.show()
     
   def scroll(self, event):
