@@ -39,6 +39,8 @@ STATUS_FONT = ('Helvetica', '12', 'normal')
 STATS_FONT = ('Courier', '12', 'normal')   # fixed-width font
 STATUS_BG = 'gray'
 
+SCROLL_INTERVAL = 50     # miliseconds
+SCROLL_DISTANCE = '2m'
 imageDict = {}   # hang on to images, or they may disappear!
 
 class View: 
@@ -87,6 +89,7 @@ class View:
     self.down.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     self.moves.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     tableau = self.tableau = ScrolledCanvas(root, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
+    self.tableau.canvas['yscrollincrement'] = SCROLL_DISTANCE
     status.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
     tableau.pack(expand=tk.YES, fill=tk.Y)
     width = kwargs['width']
@@ -105,9 +108,13 @@ class View:
     tableau.canvas.bind('<ButtonRelease-1>', self.onDrop)
     tableau.tag_bind('undo', '<ButtonPress-1>', self.undo)
     tableau.tag_bind('redo', '<ButtonPress-1>', self.redo)
-    tableau.canvas.bind('<Button-4>', self.scroll)
-    tableau.canvas.bind('<Button-5>', self.scroll)
-    tableau.canvas.bind('<MouseWheel>', self.scroll)
+    
+    # Avoid scroll wheel problems on some Mac installations
+    if sys.platform != 'darwin':
+      tableau.canvas.bind('<Button-4>', self.scrollWheel)
+      tableau.canvas.bind('<Button-5>', self.scrollWheel)
+      tableau.canvas.bind('<MouseWheel>', self.scrollWheel)
+      
     for w in self.waste:
           tableau.create_rectangle(w[0], w[1], w[0]+CARDWIDTH, w[1]+CARDHEIGHT, outline = OUTLINE)    
     for f in self.foundations:
@@ -115,6 +122,7 @@ class View:
     tableau.create_text(self.foundations[0][0], self.foundations[0][1]+CARDHEIGHT, 
                         text = "'The game is done! I've won! I've won!'\nQuoth she, and whistles thrice.",
                         fill = BACKGROUND, font=("Times", "32", "bold"), tag = 'winText', anchor=tk.NW)
+    self.scrolling = False
     self.show()
     
   def start(self):
@@ -226,19 +234,47 @@ class View:
     canvas.move('floating', dx, 0)
     
   def drag(self, event):
+    canvas = self.tableau.canvas
+    sd = self.scrollDirection()
+    if not self.scrolling and sd != 0:
+      self.scrolling = True
+      canvas.after(SCROLL_INTERVAL, self.autoScroll, sd)
+    elif self.scrolling and sd == 0:
+      self.scrolling = False
     try:
       x, y = event.x, event.y
       dx, dy = x - self.mouseX, y - self.mouseY
       self.mouseX, self.mouseY = x, y
-      self.tableau.canvas.move('floating', dx, dy)
+      canvas.move('floating', dx, dy)
     except AttributeError:
       pass
+    
+  def scrollDirection(self):
+    '''
+    Return values:
+      1: scroll down
+      -1: scroll up
+      0: don't scroll
+    '''
+    canvas = self.tableau.canvas
+    north, south = canvas.yview()
+    extent = int(canvas['scrollregion'].split()[3])
+    try:
+      left, top, right, bottom = canvas.bbox('current')
+      if bottom > south * extent:
+        return 1
+      elif top < north * extent:
+        return -1
+    except TypeError:
+      pass
+    return 0
   
   def onClick(self, event):
     '''
     Respond to click on stock or waste pile.  
     Clicks on foundation piles are ignored.
     '''
+    self.scrolling = False
     model = self.model
     canvas = self.tableau.canvas
     tag = [t for t in canvas.gettags('current') if t.startswith('code')][0]
@@ -256,13 +292,14 @@ class View:
     else:       # loop else
       return
     selection = model.grab(k, idx)
-    self.grab(selection, k, event.x, event.y)  
+    self.grab(selection, k, event.x, event.y)
     
   def onDoubleClick(self, event):
     '''
     If the user double clicks a pile with a complete suit face up on top,
     the suit will be moved to the first available foundation pile.
     '''
+    self.scrolling = False
     model = self.model
     canvas = self.tableau.canvas
     tag = [t for t in canvas.gettags('current') if t.startswith('code')][0]
@@ -279,12 +316,12 @@ class View:
     model.selectionToFoundation(target)
     self.show()
     
-  def scroll(self, event):
+  def scrollWheel(self, event):
     '''
     Use the mouse wheel to scroll the canvas.
     If we are dragging cards, they must be moved in the same direction
     as the canvas scrolls, or the cursor will become separated from the
-    cards being dragged.  
+    cards being dragged. 
     '''
     canvas = self.tableau.canvas
     lo, hi = canvas.yview()
@@ -297,6 +334,20 @@ class View:
     lo2, hi2 = canvas.yview()
     canvas.move('floating', 0, (hi2-hi) * height)
     
+  def autoScroll(self, n):
+    '''
+    If scrolling has been scheduled and not canceled, scroll a bit and
+    schedule some more scrolling
+    '''
+    if not self.scrolling:
+      return
+    canvas = self.tableau.canvas
+    lo, hi = canvas.yview()
+    height = int(canvas['scrollregion'].split()[3])
+    canvas.yview_scroll(n, tk.UNITS)
+    lo2, hi2 = canvas.yview()
+    canvas.move('floating', 0, (hi2-hi) * height)
+    canvas.after(SCROLL_INTERVAL, self.autoScroll, n)
    
   def onDrop(self, event):
     '''
@@ -310,10 +361,11 @@ class View:
     If the selection being dragged is a complete suit, the destination must be a
     foundation pile.
     '''
+    self.scrolling = False
     model = self.model
+    canvas = self.tableau.canvas   
     if not model.moving():
       return
-    canvas = self.tableau.canvas
     canvas.configure(cursor=DEFAULT_CURSOR)
     
     try:    
