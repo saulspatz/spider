@@ -255,19 +255,30 @@ class View:
       1: scroll down
       -1: scroll up
       0: don't scroll
+    SIDE EFFECT:
+      Set SCROLL_INTERVAL to value dependent on how far the card's been dragged
     '''
+    global SCROLL_INTERVAL
+    si = (50, 40, 30, 20, 10, 5)
+    answer = 0
     canvas = self.tableau.canvas
     north, south = canvas.yview()
     extent = int(canvas['scrollregion'].split()[3])
+    south  = int( south*extent)
+    north =  int(north*extent)
     try:
       left, top, right, bottom = canvas.bbox('current')
-      if bottom > south * extent:
-        return 1
-      elif top < north * extent:
-        return -1
+      if bottom > south:
+        answer =  1
+        k = min(5, (bottom - south) // 16)
+        SCROLL_INTERVAL = si[k]
+      elif top < north:
+        answer = -1
+        k = min(5, (north - top) // 16)
+        SCROLL_INTERVAL = si[k]
     except TypeError:
       pass
-    return 0
+    return answer
   
   def onClick(self, event):
     '''
