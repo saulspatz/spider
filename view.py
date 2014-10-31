@@ -39,7 +39,7 @@ STATUS_FONT = ('Helvetica', '12', 'normal')
 STATS_FONT = ('Courier', '12', 'normal')   # fixed-width font
 STATUS_BG = 'gray'
 
-SCROLL_INTERVAL = 50     # miliseconds
+SCROLL_INTERVAL = 5     # miliseconds
 SCROLL_DISTANCE = '2m'
 imageDict = {}   # hang on to images, or they may disappear!
 
