@@ -236,7 +236,12 @@ class Spider:
     self.helpText.text.see('1.0')  
   
   def optionChanged(self, *args):
-    showinfo("Option Changed", "Changes Will Take Effect Next Game")
+    if self.model.undoStack:
+      showinfo("Option Changed", "Changes Will Take Effect Next Game")
+    else:
+      self.model.reset(self.circular.get(), self.open.get())
+      self.model.adjustOpen(self.open.get())
+      self.view.show()
     
   def saveStats(self):
     model = self.model

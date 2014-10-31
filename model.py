@@ -195,17 +195,31 @@ class Model:
   def createCards(self):
     for rank, suit, back in itertools.product(ALLRANKS, SUITNAMES, COLORNAMES):
       self.deck.append(Card(rank, suit, back))
+      
+  def reset(self, circular, open):
+    self.circular = Card.circular = circular
+    self.open = open    
   
   def deal(self, circular = False, open=False):
-    self.circular = Card.circular = circular
-    self.open = open
+    self.reset(circular, open)
     self.shuffle()
     self.dealDown()
     self.dealUp()
     self.undoStack = []
     self.redoStack = []    
-    self.statsSaved = False
+    self.statsSaved = False    
     
+  def adjustOpen(self, up):
+    '''
+    Adjust the open mode if the user changes the option
+    '''
+    for w in self.waste:
+      for card in w[:-1]:
+        if up:
+          card.showFace()
+        else:
+          card.showBack()
+        
   def dealDown(self):
     '''
     Deal the face down cards into the initial layout, unless the
