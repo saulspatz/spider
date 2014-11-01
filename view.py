@@ -359,18 +359,38 @@ class View:
     lo2, hi2 = canvas.yview()
     canvas.move('floating', 0, (hi2-hi) * height)
     canvas.after(SCROLL_INTERVAL, self.autoScroll, n)
+    
+  def horizontalOverlap(self, w1, e1, w2, e2):
+    '''
+    Find the horizontal overlap between two rectangles with west and east edges
+    (w1, e1) and (w2, e2) respectively.  A negative number is returned if they
+    don't overlap at all.  A return value of 0 means they coincide in one edge only.
+    Vertical position of the rectangles is ignored, so they may be considered infinite
+    strips.
+    '''
+    return min(e1, e2) - max(w1, w2)
+  
+  def findOverlapping(self, seq, west, east):
+    '''
+    Return a list of the indices of the piles in seq that overlap a card with edges west and east,
+    sorted in decreasing order of overlap
+    '''
+    def overlap(pile):
+      return self.horizontalOverlap(west, east, pile[0], pile[0]+CARDWIDTH)
+    answer = [(pile, k) for k, pile in enumerate(seq) if  overlap(pile)>= 0]
+    answer = sorted(answer, key = lambda x: overlap(x[0]), reverse=True)
+    return [x[1] for x in answer]
    
   def onDrop(self, event):
     '''
     Drop the selected cards.  In order to recognize the destination waste pile,
-    the top of the cards being drageed must be below the bottom edge of
+    the top of the cards being dragged must be below the bottom edge of
     the foundation piles, and the cards being dragged must overlap a waste pile.
-    If they overlap two waste piles, both are considered, the one with more
-    overlap first.  If that is not a legal drop target then the other waste pile 
-    is considered.
+    If they overlap two waste piles, the one with more overlap is tested first.  
+    If that is not a legal drop target then the other waste pile is considered.
     
-    If the selection being dragged is a complete suit, the destination must be a
-    foundation pile.
+    If the selection is dropped above the bottom edge of the foundation piles, 
+    then we must be dragging a complete suit.
     '''
     self.scrolling = False
     model = self.model
@@ -378,48 +398,25 @@ class View:
     if not model.moving():
       return
     canvas.configure(cursor=DEFAULT_CURSOR)
-    
-    try:    
-      west, north, east, south = canvas.bbox(tk.CURRENT)
-    except TypeError:
-      pass                      # how can bbox(tk.CURRENT) give None?
-        
-    def findDestInArray(seq):   
-      for k, w in enumerate(seq):
-        left = w[0]       
-        right = left + CARDWIDTH - 1
-        if not (left <= west <= right or left <= east <= right ):
-          continue
-        overlap1 = min(right, east) - max(left, west)
-        try:
-          left = seq[k+1][0]
-        except IndexError:
-          return (k, )
-        right = left + CARDWIDTH - 1
-        overlap2 = min(right, east) - max(left, west)
-        if overlap2 <= 0:
-          return (k, )
-        if overlap1 > overlap2:
-          return (k, k+1)
-        return (k+1, k)
-      return tuple() 
-        
+    west, north, east, south = canvas.bbox(tk.CURRENT)
+    success = False
+     
     if north > self.foundations[0][1]+CARDHEIGHT:
-      for pile in findDestInArray(self.waste):
+      for pile in self.findOverlapping(self.waste, west, east):
         if pile == model.moveOrigin or not model.canDrop(pile):
           continue
         self.completeMove(pile)
-        break
-      else:   # loop else
-        self.abortMove()
+        success = True
+        break 
     elif model.movingCompleteSuit():
       #check for drop on foundation pile
-      for pile in findDestInArray(self.foundations):
+      for pile in self.findOverlapping(self.foundations, west, east):
         if model.foundations[pile].isEmpty():
           self.suitToFoundation(pile)
+          success = True
           break
-      else:     # loop else
-        self.abortMove()
+    if not success:  
+      self.abortMove()
       
     self.show()
        
