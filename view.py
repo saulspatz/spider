@@ -224,6 +224,7 @@ class View:
     if not selection:
       return
     self.mouseX, self.mouseY = mouseX, mouseY
+    self.yfraction = canvas.canvas.yview()[0]
     west = self.waste[k][0]
     for card in selection:
       tag = 'code%s'%card.code
@@ -422,6 +423,7 @@ class View:
        
   def abortMove(self):
     self.model.abortMove()
+    self.tableau.canvas.yview_moveto(self.yfraction)
     self.showWaste(self.model.moveOrigin)
     self.tableau.dtag('floating', 'floating')
          
