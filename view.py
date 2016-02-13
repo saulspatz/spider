@@ -39,6 +39,8 @@ STATUS_FONT = ('Helvetica', '12', 'normal')
 STATS_FONT = ('Courier', '12', 'normal')   # fixed-width font
 STATUS_BG = 'gray'
 
+SCROLL_INTERVAL = 5     # miliseconds
+SCROLL_DISTANCE = '2m'
 imageDict = {}   # hang on to images, or they may disappear!
 
 class View: 
@@ -87,6 +89,7 @@ class View:
     self.down.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     self.moves.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     tableau = self.tableau = ScrolledCanvas(root, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
+    self.tableau.canvas['yscrollincrement'] = SCROLL_DISTANCE
     status.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
     tableau.pack(expand=tk.YES, fill=tk.Y)
     width = kwargs['width']
@@ -105,9 +108,13 @@ class View:
     tableau.canvas.bind('<ButtonRelease-1>', self.onDrop)
     tableau.tag_bind('undo', '<ButtonPress-1>', self.undo)
     tableau.tag_bind('redo', '<ButtonPress-1>', self.redo)
-    tableau.canvas.bind('<Button-4>', self.scroll)
-    tableau.canvas.bind('<Button-5>', self.scroll)
-    tableau.canvas.bind('<MouseWheel>', self.scroll)
+    
+    # Avoid scroll wheel problems on some Mac installations
+    if sys.platform != 'darwin':
+      tableau.canvas.bind('<Button-4>', self.scrollWheel)
+      tableau.canvas.bind('<Button-5>', self.scrollWheel)
+      tableau.canvas.bind('<MouseWheel>', self.scrollWheel)
+      
     for w in self.waste:
           tableau.create_rectangle(w[0], w[1], w[0]+CARDWIDTH, w[1]+CARDHEIGHT, outline = OUTLINE)    
     for f in self.foundations:
@@ -115,6 +122,7 @@ class View:
     tableau.create_text(self.foundations[0][0], self.foundations[0][1]+CARDHEIGHT, 
                         text = "'The game is done! I've won! I've won!'\nQuoth she, and whistles thrice.",
                         fill = BACKGROUND, font=("Times", "32", "bold"), tag = 'winText', anchor=tk.NW)
+    self.scrolling = False
     self.show()
     
   def start(self):
@@ -216,6 +224,7 @@ class View:
     if not selection:
       return
     self.mouseX, self.mouseY = mouseX, mouseY
+    self.yfraction = canvas.canvas.yview()[0]
     west = self.waste[k][0]
     for card in selection:
       tag = 'code%s'%card.code
@@ -226,19 +235,58 @@ class View:
     canvas.move('floating', dx, 0)
     
   def drag(self, event):
+    canvas = self.tableau.canvas
+    sd = self.scrollDirection()
+    if not self.scrolling and sd != 0:
+      self.scrolling = True
+      canvas.after(SCROLL_INTERVAL, self.autoScroll, sd)
+    elif self.scrolling and sd == 0:
+      self.scrolling = False
     try:
       x, y = event.x, event.y
       dx, dy = x - self.mouseX, y - self.mouseY
       self.mouseX, self.mouseY = x, y
-      self.tableau.canvas.move('floating', dx, dy)
+      canvas.move('floating', dx, dy)
     except AttributeError:
       pass
+    
+  def scrollDirection(self):
+    '''
+    Return values:
+      1: scroll down
+      -1: scroll up
+      0: don't scroll
+    SIDE EFFECT:
+      Set SCROLL_INTERVAL to value dependent on how far the card's been dragged
+    '''
+    global SCROLL_INTERVAL
+    si = (50, 40, 30, 20, 10, 5)
+    answer = 0
+    canvas = self.tableau.canvas
+    north, south = canvas.yview()
+    extent = int(canvas['scrollregion'].split()[3])
+    south  = int( south*extent)
+    north =  int(north*extent)
+    try:
+      left, top, right, bottom = canvas.bbox('current')
+      if bottom > south:
+        answer =  1
+        k = min(5, (bottom - south) // 16)
+        SCROLL_INTERVAL = si[k]
+      elif top < north:
+        answer = -1
+        k = min(5, (north - top) // 16)
+        SCROLL_INTERVAL = si[k]
+    except TypeError:
+      pass
+    return answer
   
   def onClick(self, event):
     '''
     Respond to click on stock or waste pile.  
     Clicks on foundation piles are ignored.
     '''
+    self.scrolling = False
     model = self.model
     canvas = self.tableau.canvas
     tag = [t for t in canvas.gettags('current') if t.startswith('code')][0]
@@ -256,32 +304,36 @@ class View:
     else:       # loop else
       return
     selection = model.grab(k, idx)
-    self.grab(selection, k, event.x, event.y)  
+    self.grab(selection, k, event.x, event.y)
     
   def onDoubleClick(self, event):
     '''
-    If the user double clicks a card that is part of a complete suit,
+    If the user double clicks a pile with a complete suit face up on top,
     the suit will be moved to the first available foundation pile.
     '''
+    self.scrolling = False
     model = self.model
     canvas = self.tableau.canvas
     tag = [t for t in canvas.gettags('current') if t.startswith('code')][0]
     code = int(tag[4:])             # code of the card clicked
     for k, w in enumerate(model.waste):
-      idx = w.find(code)
-      if idx != -1:
+      if [card for card in w if card.code == code]:
         break
     else:       # loop else
       return 
-    model.completeSuit(k, idx)
+    if not model.completeSuit(k):
+      return
+    target = model.firstFoundation()
+    model.grab(k, len(w)-13)
+    model.selectionToFoundation(target)
     self.show()
     
-  def scroll(self, event):
+  def scrollWheel(self, event):
     '''
     Use the mouse wheel to scroll the canvas.
     If we are dragging cards, they must be moved in the same direction
     as the canvas scrolls, or the cursor will become separated from the
-    cards being dragged.  
+    cards being dragged. 
     '''
     canvas = self.tableau.canvas
     lo, hi = canvas.yview()
@@ -294,71 +346,84 @@ class View:
     lo2, hi2 = canvas.yview()
     canvas.move('floating', 0, (hi2-hi) * height)
     
+  def autoScroll(self, n):
+    '''
+    If scrolling has been scheduled and not canceled, scroll a bit and
+    schedule some more scrolling
+    '''
+    if not self.scrolling:
+      return
+    canvas = self.tableau.canvas
+    lo, hi = canvas.yview()
+    height = int(canvas['scrollregion'].split()[3])
+    canvas.yview_scroll(n, tk.UNITS)
+    lo2, hi2 = canvas.yview()
+    canvas.move('floating', 0, (hi2-hi) * height)
+    canvas.after(SCROLL_INTERVAL, self.autoScroll, n)
+    
+  def horizontalOverlap(self, w1, e1, w2, e2):
+    '''
+    Find the horizontal overlap between two rectangles with west and east edges
+    (w1, e1) and (w2, e2) respectively.  A negative number is returned if they
+    don't overlap at all.  A return value of 0 means they coincide in one edge only.
+    Vertical position of the rectangles is ignored, so they may be considered infinite
+    strips.
+    '''
+    return min(e1, e2) - max(w1, w2)
+  
+  def findOverlapping(self, seq, west, east):
+    '''
+    Return a list of the indices of the piles in seq that overlap a card with edges west and east,
+    sorted in decreasing order of overlap
+    '''
+    def overlap(pile):
+      return self.horizontalOverlap(west, east, pile[0], pile[0]+CARDWIDTH)
+    answer = [(pile, k) for k, pile in enumerate(seq) if  overlap(pile)>= 0]
+    answer = sorted(answer, key = lambda x: overlap(x[0]), reverse=True)
+    return [x[1] for x in answer]
    
   def onDrop(self, event):
     '''
     Drop the selected cards.  In order to recognize the destination waste pile,
-    the top of the cards being drageed must be below the bottom edge of
+    the top of the cards being dragged must be below the bottom edge of
     the foundation piles, and the cards being dragged must overlap a waste pile.
-    If they overlap two waste piles, both are considered, the one with more
-    overlap first.  If that is not a legal drop target then the other waste pile 
-    is considered.
+    If they overlap two waste piles, the one with more overlap is tested first.  
+    If that is not a legal drop target then the other waste pile is considered.
     
-    If the selection being dragged is a complete suit, the destination must be a
-    foundation pile.
+    If the selection is dropped above the bottom edge of the foundation piles, 
+    then we must be dragging a complete suit.
     '''
+    self.scrolling = False
     model = self.model
+    canvas = self.tableau.canvas   
     if not model.moving():
       return
-    canvas = self.tableau.canvas
     canvas.configure(cursor=DEFAULT_CURSOR)
-    
-    try:    
-      west, north, east, south = canvas.bbox(tk.CURRENT)
-    except TypeError:
-      pass                      # how can bbox(tk.CURRENT) give None?
-        
-    def findDestInArray(seq):   
-      for k, w in enumerate(seq):
-        left = w[0]       
-        right = left + CARDWIDTH - 1
-        if not (left <= west <= right or left <= east <= right ):
-          continue
-        overlap1 = min(right, east) - max(left, west)
-        try:
-          left = seq[k+1][0]
-        except IndexError:
-          return (k, )
-        right = left + CARDWIDTH - 1
-        overlap2 = min(right, east) - max(left, west)
-        if overlap2 <= 0:
-          return (k, )
-        if overlap1 > overlap2:
-          return (k, k+1)
-        return (k+1, k)
-      return tuple() 
-        
+    west, north, east, south = canvas.bbox(tk.CURRENT)
+    success = False
+     
     if north > self.foundations[0][1]+CARDHEIGHT:
-      for pile in findDestInArray(self.waste):
+      for pile in self.findOverlapping(self.waste, west, east):
         if pile == model.moveOrigin or not model.canDrop(pile):
           continue
         self.completeMove(pile)
-        break
-      else:   # loop else
-        self.abortMove()
+        success = True
+        break 
     elif model.movingCompleteSuit():
       #check for drop on foundation pile
-      for pile in findDestInArray(self.foundations):
+      for pile in self.findOverlapping(self.foundations, west, east):
         if model.foundations[pile].isEmpty():
           self.suitToFoundation(pile)
+          success = True
           break
-      else:     # loop else
-        self.abortMove()
+    if not success:  
+      self.abortMove()
       
     self.show()
        
   def abortMove(self):
     self.model.abortMove()
+    self.tableau.canvas.yview_moveto(self.yfraction)
     self.showWaste(self.model.moveOrigin)
     self.tableau.dtag('floating', 'floating')
          

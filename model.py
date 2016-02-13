@@ -18,7 +18,7 @@ SUITNAMES = ('club', 'diamond', 'heart', 'spade')
 RANKNAMES = ["", "Ace"] + list(map(str, range(2, 11))) + ["Jack", "Queen", "King"]
 COLORNAMES = ("red", "blue")     # back colors
 
-DEAL = (0, 0, 10)     # used in undo/redo stacks
+DEAL = (0, 0, 10, 0)     # used in undo/redo stacks
 
 class Stack(list):
   '''
@@ -159,12 +159,11 @@ class Model:
       the stock
       10 waste piles, where all the action is
       8 foundation piles for completed suits
-  All entries on the undo and redo stacks are in the form (source, target, n), where
-      waste piles are numbered 0 to 9 and foundations 10 to 17, and n is the number
-      of cards moved, except that the entry (0, 0, 10) indicates dealing a row of cards,
-      and an entry of the form (source, source, 0) indicates turning the top card 
-      of the pile face up.
-      
+  All entries on the undo and redo stacks are in the form (source, target, n, f), where
+      waste piles are numbered 0 to 9 and foundations 10 to 17, n is the number
+      of cards moved, an d f is a boolean indicating whether or not the top
+      card of the source stack is flipped, except that the entry (0, 0, 10, 0) connotes 
+      dealing a row of cards. 
     '''
   def __init__(self):
     random.seed()
@@ -196,17 +195,31 @@ class Model:
   def createCards(self):
     for rank, suit, back in itertools.product(ALLRANKS, SUITNAMES, COLORNAMES):
       self.deck.append(Card(rank, suit, back))
+      
+  def reset(self, circular, open):
+    self.circular = Card.circular = circular
+    self.open = open    
   
   def deal(self, circular = False, open=False):
-    self.circular = Card.circular = circular
-    self.open = open
+    self.reset(circular, open)
     self.shuffle()
     self.dealDown()
     self.dealUp()
     self.undoStack = []
     self.redoStack = []    
-    self.statsSaved = False
+    self.statsSaved = False    
     
+  def adjustOpen(self, up):
+    '''
+    Adjust the open mode if the user changes the option
+    '''
+    for w in self.waste:
+      for card in w[:-1]:
+        if up:
+          card.showFace()
+        else:
+          card.showBack()
+        
   def dealDown(self):
     '''
     Deal the face down cards into the initial layout, unless the
@@ -300,8 +313,7 @@ class Model:
     target = self.waste[dest] if dest < 10 else self.foundations[dest-10]
     target.extend(self.selection)
     source[:] = source[:self.moveIndex]
-    self.flipTop(self.moveOrigin)
-    self.undoStack.append((self.moveOrigin, dest, len(self.selection)))
+    self.undoStack.append(self.flipTop(self.moveOrigin, dest, len(self.selection)))
     self.selection = []
     self.redoStack = []
     
@@ -317,43 +329,32 @@ class Model:
     '''
     self.completeMove(dest)  
         
-  def completeSuit(self, pile, idx):
+  def completeSuit(self, pile):
     '''
-    *** Performs an action, and returns True (success) or False (failure).  ***
-    If pile contains a comple suit, and index indicates one of the 
-    top 13 cards, move the suit to the first available foundation,
-    and return True.  Otherwise, return False.
+    Does the pile have a complete suit, face up, sorted from King 
+    downwards, on top?
     '''
     w = self.waste[pile]
-    if len(w) < 13 or idx < len(w) - 13:
+    if len(w) < 13 or w[-13].faceDown():
       return False
-    
-    if w[-13].faceDown() :
-      return False
-    if not Card.isDescending(w[-13:]):
-        return False
-      
-    for i, f in enumerate(self.foundations):
-      if f.isEmpty(): break
-    for  card in w[-13:]:
-      f.add(card)
-    w[:] = w[:-13]
-    self.undoStack.append((pile, i+10, 13))
-    self.flipTop(pile)
-    self.redoStack = []
-    return True
+    return Card.isDescending(w[-13:])
   
-  def flipTop(self, k):
+  def firstFoundation(self):
+    # return index of first empty foundation pile
+    
+    for i, f in enumerate(self.foundations):
+      if f.isEmpty(): return i    
+  
+  def flipTop(self, src, target, n):
     '''
     Turn the top card of waste pile k face up, if need be
+    Return appropriate undo tuple
     '''
-    w = self.waste[k]
-    try:
-      if w[-1].faceDown():
-        w[-1].showFace()
-        self.undoStack.append((k,k,0))
-    except IndexError:
-      pass
+    w = self.waste[src]
+    flip = w and w[-1].faceDown()
+    if flip:
+      w[-1].showFace()
+    return src, target, n, flip
   
   def movingCompleteSuit(self):
       return len(self.selection) == 13
@@ -364,23 +365,20 @@ class Model:
   def undo(self):
     ''''
     Pop a record off the undo stack and undo the corresponding move.
-    If the move is a flipTop, undo the next move also.
     '''
-    (s, t, n) = self.undoStack.pop()
-    if (s, t, n) == DEAL:
+    (s, t, n, f) = self.undoStack.pop()
+    self.redoStack.append((s,t,n, f))
+    if (s, t, n, f) == DEAL:
       self.undeal()
-    elif s == t:      # flipTop called
-      self.waste[s][-1].showBack()
-      self.redoStack.append((s,t,n))
-      self.undo()
     else:
+      if f:   # flip top card
+        self.waste[s][-1].showBack()
       source = self.waste[s] if s < 10 else self.foundations[s-10]
       target = self.waste[t] if t < 10 else self.foundations[t-10]
       assert len(target) >= n
       source.extend(target[-n:])
       target[:] = target[:-n]
-      self.redoStack.append((s,t,n))
-  
+    
   def undeal(self):
     '''
     Undo a deal of a row of cards
@@ -390,33 +388,24 @@ class Model:
       card = w.pop()
       card.showBack()
       self.stock.append(card)
-    self.redoStack.append(DEAL)
 
   def redo(self):
     ''''
     Pop a record off the redo stack and redo the corresponding move.
-    If the next move is a flipTop, redo the next move also.
     ''' 
-    (s, t, n) = self.redoStack.pop()
-    if (s, t, n) == DEAL:
+    (s, t, n, f) = self.redoStack.pop()
+    self.undoStack.append((s,t,n, f))
+    if (s, t, n, f) == DEAL:
       self.dealUp(True) 
     else:
       source = self.waste[s] if s < 10 else self.foundations[s-10]
       target = self.waste[t] if t < 10 else self.foundations[t-10]
       assert n <= len(source)
       target.extend(source[-n:])
-      source[:] = source[:-n]  
-    self.undoStack.append((s,t,n))
-    
-    try:
-      (s, t, n) = self.redoStack[-1]
-      if  s == t and n == 0:    # flip top
-        self.redoStack.pop()
+      source[:] = source[:-n]     
+    if f:  # flip top card
         self.waste[s][-1].showFace()
-        self.undoStack.append((s, t, n))
-    except IndexError:
-      pass
-      
+        
   def canUndo(self):
     return self.undoStack != []
   
@@ -441,7 +430,7 @@ class Model:
     return len(self.stock) // 10
   
   def moves(self):
-    return len([m for m in self.undoStack if m[0] != m[1]])
+    return len([m for m in self.undoStack if m != DEAL])
   
   def downCards(self):
     return sum([self.downUp(k)[0] for k in range(10)])
@@ -462,9 +451,10 @@ class Model:
       variant = 'Circular' if not op else 'Both'
     win = self.win()
     moves = self.moves()
-    spec = [m for m in self.undoStack if m[0] == m[1]]
-    up = len([m for m in spec if m[2] == 0] )
-    upFirst = len(tuple(itertools.takewhile(lambda m: m[2] == 0, spec)))
+    undo = self.undoStack
+    up = len([m for m in undo if m[3] ] )
+    first = undo.index(DEAL)
+    upFirst = len([m for m in undo[:first] if m[3] ] )
     return Stats(variant, win, moves, up, upFirst, date)
   
 Stats = namedtuple('Stats', ['variant', 'win', 'moves', 'up', 'up1', 'date'])

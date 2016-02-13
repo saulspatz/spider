@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 # spider.pyw
 
 '''
@@ -222,21 +222,26 @@ class Spider:
     model.save(saveFile)
     
   def load(self):
-    dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
-    if not os.path.exists(dataDir):
-      showerror('No Files to Open', 'Directory\n%s\ndoes not exist'%dataDir)
-    else:
+    try:
+      dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
       filename = LoadFileDialog(self.view.root, dataDir, bg = 'lemonChiffon').go()
       if  filename:
         self.model.load(os.path.join(dataDir,filename))
         self.view.show()
+    except FileNotFoundError:
+      showerror('No Files to Open', 'Directory\n%s\ndoes not exist'%dataDir)      
       
   def showHelp(self):
     self.helpText.deiconify()
     self.helpText.text.see('1.0')  
   
   def optionChanged(self, *args):
-    showinfo("Option Changed", "Changes Will Take Effect Next Game")
+    if self.model.undoStack or self.model.redoStack:
+      showinfo("Option Changed", "Changes Will Take Effect Next Game")
+    else:
+      self.model.reset(self.circular.get(), self.open.get())
+      self.model.adjustOpen(self.open.get())
+      self.view.show()
     
   def saveStats(self):
     model = self.model
