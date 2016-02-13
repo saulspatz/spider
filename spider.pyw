@@ -225,10 +225,11 @@ class Spider:
     dataDir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
     if not os.path.exists(dataDir):
       showerror('No Files to Open', 'Directory\n%s\ndoes not exist'%dataDir)
-    filename = LoadFileDialog(self.view.root, dataDir, bg = 'lemonChiffon').go()
-    if  filename:
-      self.model.load(os.path.join(dataDir,filename))
-      self.view.show()
+    else:
+      filename = LoadFileDialog(self.view.root, dataDir, bg = 'lemonChiffon').go()
+      if  filename:
+        self.model.load(os.path.join(dataDir,filename))
+        self.view.show()
       
   def showHelp(self):
     self.helpText.deiconify()
