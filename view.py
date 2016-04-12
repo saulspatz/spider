@@ -18,13 +18,13 @@ from tkinter.simpledialog import SimpleDialog
 # a card above a face down card, and OFFSET2 is the offset used
 # for displaying a card above a face up card.
 
-CARDWIDTH = 71
-CARDHEIGHT = 96
+CARDWIDTH = 75
+CARDHEIGHT = 113
 MARGIN = 10
 XSPACING = CARDWIDTH + 2*MARGIN
 YSPACING = CARDHEIGHT + 4*MARGIN
 OFFSET1 = 8
-OFFSET2 = 25
+OFFSET2 = 35
 
 BACKGROUND = '#070'
 OUTLINE = '#060'        # outline color of foundation files
@@ -131,8 +131,8 @@ class View:
   def loadImages(self):
     PhotoImage = tk.PhotoImage
     cardDir = os.path.join(os.path.dirname(sys.argv[0]), 'cards') 
-    blue = PhotoImage(file=os.path.join(cardDir,'blueBackVert.gif'))
-    red = PhotoImage(file=os.path.join(cardDir,'redBackVert.gif'))
+    blue = PhotoImage(file=os.path.join(cardDir,'blueBack.gif'))
+    red = PhotoImage(file=os.path.join(cardDir,'redBack.gif'))
     imageDict['blue'] = blue
     imageDict['red'] = red    
     for rank, suit in itertools.product(ALLRANKS, SUITNAMES):
