@@ -57,14 +57,17 @@ class View:
     self.model =  parent.model
     self.root = root = tk.Tk()
     root.protocol('WM_DELETE_WINDOW', quit)
-    root.resizable(height=True, width=False)
-    self.root.wm_geometry('950x800-10+10')
+    width = 4*MARGIN+10*XSPACING
+    self.root.wm_geometry('%dx850-10+10'%width)
     root.title("Spider Solitaire")
+    #root.resizable(width=False,height=False)
+    root.minsize(width=width, height=500)
+    root.maxsize(width=width, height=2500)
     self.menu = tk.Menu(root)         # parent constructs actual menu         
     root.config(menu=self.menu)                 
     self.waste = []           # NW corners of the waste piles
     self.foundations = []   # NW corners of the foundation piles
-    x = MARGIN
+    x = 2*MARGIN
     y = 5* MARGIN
     self.stock = (x,y)      #NW corner of stock
     x += XSPACING
@@ -72,7 +75,7 @@ class View:
       x += XSPACING
       self.foundations.append((x, y))
     y += YSPACING
-    x = MARGIN
+    x = 2*MARGIN
     for k in range(10):
       self.waste.append((x, y)) 
       x += XSPACING 
