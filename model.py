@@ -207,7 +207,6 @@ class Model:
     self.dealUp()
     self.undoStack = []
     self.redoStack = []    
-    self.statsSaved = False    
     
   def adjustOpen(self, up):
     '''
@@ -415,17 +414,8 @@ class Model:
   def save(self, filename):
     with open(filename, 'wb') as fn:
       pickle.dump((self.deck, self.undoStack, self.redoStack, self.stock, self.foundations,
-                          self.waste, self.circular, self.open, self.statsSaved), fn)
-      
-  def load(self, filename):
-    '''
-    Read a saved game from filename
-    '''
-    with open(filename, 'rb') as fin:
-      (self.deck, self.undoStack, self.redoStack, self.stock, self.foundations, 
-       self.waste, self.circular, self.open, self.statsSaved) = pickle.load(fin)
-    self.statsSaved = True
-    
+                          self.waste, self.circular, self.open), fn)
+          
   def dealsLeft(self):
     return len(self.stock) // 10
   
@@ -434,31 +424,4 @@ class Model:
   
   def downCards(self):
     return sum([self.downUp(k)[0] for k in range(10)])
-
-  def stats(self):
-    # variant is 'Standard,' 'Circular', 'Open', or 'Both'
-    # win is boolean
-    # Moves is number of moves made
-    # up is total face down cards turned up
-    # upFirst is cards turned up on first deal
-    
-    date = datetime.date.today().strftime('%x')
-    circ = self.circular
-    op = self.open
-    if not circ:
-      variant = 'Standard' if not op else 'Open'
-    else:
-      variant = 'Circular' if not op else 'Both'
-    win = self.win()
-    moves = self.moves()
-    undo = self.undoStack
-    up = len([m for m in undo if m[3] ] )
-    first = undo.index(DEAL)
-    upFirst = len([m for m in undo[:first] if m[3] ] )
-    return Stats(variant, win, moves, up, upFirst, date)
-  
-Stats = namedtuple('Stats', ['variant', 'win', 'moves', 'up', 'up1', 'date'])
-SummaryStats = namedtuple('SummaryStats', ['variant', 'games', 'win', 'moves', 'up', 'up1'])      
-    
-  
     

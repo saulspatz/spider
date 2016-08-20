@@ -67,4 +67,4 @@ target/
 
 # Project-specific
 *.ini
-stats.txt
+*.txt

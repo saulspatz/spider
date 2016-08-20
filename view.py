@@ -36,7 +36,6 @@ DEFAULT_CURSOR = 'arrow'
 SELECT_CURSOR = 'hand2'
 
 STATUS_FONT = ('Helvetica', '12', 'normal')
-STATS_FONT = ('Courier', '12', 'normal')   # fixed-width font
 STATUS_BG = 'gray'
 
 SCROLL_INTERVAL = 5     # miliseconds
@@ -466,29 +465,7 @@ class View:
   
   def enableUndo(self):
     self.tableau.itemconfigure('undo', state=tk.NORMAL)
-    
-  def showStats(self, stats):
-    if stats == None:
-      showerror('No Stats File', os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt') + ' does not exist.')
-    elif stats == []:
-      showerror('No Stats to Display', os.path.join(os.path.dirname(sys.argv[0]), 'stats.txt') + ' is empty.')
-    else:    
-      StatsDialog(self.root, stats)
-    
-class StatsDialog(SimpleDialog):
-  def __init__(self, top, stats):
-    # stats is a Model.SummaryStats
-    super().__init__(top, text='', buttons = ["Dismiss"], default = 0, cancel = 0, title = 'Spider Stats')
-    text = '    Variant   Games Wins Moves Up Up1\n\n'
-    for stat in stats:
-      if stat.variant== 'Both':
-        stat = stat._replace(variant='Open Circular')
-      text += '%-13s%6d%5d%6d%3d%4d\n' %stat
-      
-    text += '\n"Up" column gives total number of face\ndown cards turned up.\n'
-    text += '"Up1" column gives number of cards\nturned up on initial deal.\n'
-    self.message.configure(font=STATS_FONT, text = text)
-      
+          
   def wm_delete_window(self):
       self.root.destroy()
 
