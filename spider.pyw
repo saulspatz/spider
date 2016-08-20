@@ -3,7 +3,7 @@
 
 '''
 Spider solitaire.  I wrote this because the games I find online have various deficiencies. 
-Most annoyingly, they dn't leave enough vertical space between the cards so that you
+Most annoyingly, they don't leave enough vertical space between the cards so that you
 can see the suits.  In most cases, all you can tell is the rank and color.
 Also, they use the protocol that when the player completes a suits from King to Ace, it is 
 automatically taken out of play immediately. The rule is that it remains in play until
@@ -13,12 +13,8 @@ from model import Model
 from view import View
 import tkinter as tk
 from tkinter.messagebox import showerror, showinfo, askokcancel
-from datetime import datetime
 import sys, os
-from utils import ScrolledList
 
-FMT  = '%Y_%m_%d_%H_%M_%S'      # format strings for datetime objects
-FMT2 = '%x %X'
 
 helpText = '''
 OBJECTIVE

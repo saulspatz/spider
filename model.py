@@ -1,7 +1,6 @@
 # model.py Model for spider solitaire
 
-import random, itertools, pickle
-import datetime
+import random, itertools
 from collections import namedtuple
 
 ACE = 1
