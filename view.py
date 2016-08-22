@@ -59,7 +59,7 @@ class View:
     width = 4*MARGIN+10*XSPACING
     self.root.wm_geometry('%dx850-10+10'%width)
     root.title("Spider Solitaire")
-    #root.resizable(width=False,height=False)
+
     root.minsize(width=width, height=500)
     root.maxsize(width=width, height=2500)
     self.menu = tk.Menu(root)         # parent constructs actual menu         

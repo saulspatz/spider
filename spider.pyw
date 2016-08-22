@@ -50,6 +50,9 @@ The most important thing in organizing the waste piles are empty piles, or "spac
 VARIANTS 
 In circular spider solitaire, a King may be placed on top of an Ace and a run may have a King on top of an Ace, so that the 3, 2, Ace, King, Queen of Clubs can be moved onto a 4.  A run can comprise more than 13 cards.  The run must still be in sequence from King down to Ace before being moved to a foundation pile.
 
+OPTIONS
+The game may be played "open" so that all cards are dealt face up.  You can switch back and forth in the same game, so that you can "peek".  You can also switch back and forth between circular and normal mode, to allow a limited number of "cheats."
+
 '''        
 class Spider:
   def __init__(self):
@@ -75,20 +78,20 @@ class Spider:
     top.transient(self.view.root)
     top.protocol("WM_DELETE_WINDOW", top.withdraw)
     top.withdraw()
-    top.resizable(False, True)
     top.title("Spider Help")
     f = tk.Frame(top)
-    self.helpText.text = text = tk.Text(f, height=30, width=80, wrap=tk.WORD)
+    self.helpText.text = text = tk.Text(f, height=30, width = 80, wrap=tk.WORD)
     text['font'] = ('helevetica', 12, 'normal')
     text['bg'] = '#ffef85'
     text['fg'] = '#8e773f'
     scrollY = tk.Scrollbar(f, orient=tk.VERTICAL, command=text.yview)
     text['yscrollcommand'] = scrollY.set
-    text.grid(row=0, column=0, sticky='NS')
+    text.grid(row=0, column=0, sticky='NSEW')
     f.rowconfigure(0, weight=1)
+    f.columnconfigure(0, weight=1)
     scrollY.grid(row=0, column=1, sticky='NS')
     tk.Button(f, text='Dismiss', command=top.withdraw).grid(row=1, column=0)
-    f.grid(sticky='NS')
+    f.grid(sticky='NSEW')
     top.rowconfigure(0, weight=1)
     text.insert(tk.INSERT,helpText)
     
@@ -97,7 +100,9 @@ class Spider:
     
     game = tk.Menu(top, tearoff=False)
     game.add_command(label='New', command=self.deal)
+    game.add_command(label='Help', command = self.showHelp)  
     game.add_command(label='Quit', command=self.quit)
+    
     top.add_cascade(label='Game', menu=game)
        
     options = tk.Menu(top, tearoff=False)
@@ -105,8 +110,6 @@ class Spider:
     options.add_checkbutton(label='Open',  variable=self.open)
     top.add_cascade(label='Options', menu=options)
        
-    top.add_command(label='Help', command = self.showHelp)  
-     
   def notdone(self):
     showerror('Not implemented', 'Not yet available') 
 
