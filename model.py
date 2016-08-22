@@ -1,7 +1,6 @@
 # model.py Model for spider solitaire
 
 import random, itertools
-from collections import namedtuple
 
 ACE = 1
 JACK = 11
@@ -106,6 +105,10 @@ class Card:
   A card is identified by its rank, suit, and back color.
   A card knows whether it is face up or own, but does not know 
   which stack it is in.
+  The peek attribute is true if the card has been turned up by
+  "peeking," that is, by choosing the "open" option.  If the "open"
+  option is turned off, then cards that are face up only because they
+  were peeked at will be turned down.
   '''
   circular = False
   def __init__(self, rank, suit, back):
@@ -113,6 +116,7 @@ class Card:
     self.suit = suit
     self.back = back
     self.up = False   # all cards are initially face down
+    self.peek = False
     self.code = 52*COLORNAMES.index(back)+13*SUITNAMES.index(suit)+rank-1  
 
   def showFace(self):
@@ -159,10 +163,10 @@ class Model:
       10 waste piles, where all the action is
       8 foundation piles for completed suits
   All entries on the undo and redo stacks are in the form (source, target, n, f), where
-      waste piles are numbered 0 to 9 and foundations 10 to 17, n is the number
-      of cards moved, an d f is a boolean indicating whether or not the top
-      card of the source stack is flipped, except that the entry (0, 0, 10, 0) connotes 
-      dealing a row of cards. 
+      waste piles are numbered 0 to 9 and foundations 10 to 17, 
+      n is the number of cards moved, 
+      f is a boolean indicating whether or not the top card of the source stack is flipped,
+      except that the entry (0, 0, 10, 0) connotes dealing a row of cards. 
     '''
   def __init__(self):
     random.seed()
@@ -211,12 +215,18 @@ class Model:
     '''
     Adjust the open mode if the user changes the option
     '''
-    for w in self.waste:
-      for card in w[:-1]:
-        if up:
-          card.showFace()
-        else:
-          card.showBack()
+    if up:
+      for w in self.waste:
+        for card in w[:-1]:
+          if card.faceDown():
+            card.peek = True
+            card.showFace()
+    else:
+      for w in self.waste:
+        for card in w[:-1]:        
+          if card.faceUp() and card.peek:
+            card.showBack()
+          card.peek = False
         
   def dealDown(self):
     '''
@@ -249,7 +259,7 @@ class Model:
     '''
     The game is won when all foundation piles are used
     '''
-    return min([len(f) for f in self.foundations]) == 13
+    return all(self.foundations) 
   
   def downUp(self, k):
     '''
@@ -345,7 +355,7 @@ class Model:
   
   def flipTop(self, src, target, n):
     '''
-    Turn the top card of waste pile k face up, if need be
+    Turn the top card of waste pile src face up, if need be
     Return appropriate undo tuple
     '''
     w = self.waste[src]
