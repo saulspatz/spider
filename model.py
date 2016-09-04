@@ -345,7 +345,7 @@ class Model:
     w = self.waste[pile]
     if len(w) < 13 or w[-13].faceDown():
       return False
-    return Card.isDescending(w[-13:])
+    return w[-1].rank == ACE and Card.isDescending(w[-13:])
   
   def firstFoundation(self):
     # return index of first empty foundation pile
@@ -365,7 +365,10 @@ class Model:
     return src, target, n, flip
   
   def movingCompleteSuit(self):
-      return len(self.selection) == 13
+    # Only called for drop on foundation pile, so check that top card is an Ace
+    # This is needed when the circular option is in effect
+    select = self.selection
+    return len(select) == 13 and select[-1].rank == ACE 
     
   def win(self):
     return all((len(f) for f in self.foundations)) 
