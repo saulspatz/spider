@@ -423,6 +423,10 @@ class Model:
   def canRedo(self):
       return self.redoStack != []  
     
+  def restart(self):
+    while self.canUndo():
+      self.undo()
+      
   def save(self, filename):
     with open(filename, 'wb') as fn:
       pickle.dump((self.deck, self.undoStack, self.redoStack, self.stock, self.foundations,

@@ -96,12 +96,16 @@ class View:
     tableau.pack(expand=tk.YES, fill=tk.Y)
     width = kwargs['width']
     height = kwargs['height']
-    self.undoButton = tableau.create_oval(width//2-4*MARGIN, MARGIN, width//2+2*MARGIN, 4*MARGIN, 
-                                          fill = BUTTON, outline = BUTTON, tag = "undo")
-    self.redoButton = tableau.create_oval(width//2+4*MARGIN, MARGIN, width//2+10*MARGIN, 4*MARGIN, 
-                                          fill = BUTTON, outline = BUTTON, tag = "redo")
-    tableau.create_text(width//2-MARGIN, 2.5*MARGIN, text='Undo', fill = CELEBRATE, tag = 'undo', anchor=tk.CENTER)
-    tableau.create_text(width//2+7*MARGIN, 2.5*MARGIN, text='Redo', fill = CELEBRATE, tag = 'redo', anchor=tk.CENTER)
+    
+    def makeButton(left, text):
+      button = tableau.create_oval(left, MARGIN, left+6*MARGIN, 4*MARGIN, fill=BUTTON, outline=BUTTON, tag = text)
+      tableau.create_text(left+3*MARGIN,2.5*MARGIN,text=text.title(),fill=CELEBRATE,tag=text,anchor=tk.CENTER)
+      return button
+    
+    self.undoButton = makeButton(width//2-11*MARGIN, 'undo')
+    self.redoButton = makeButton(width//2-3*MARGIN, 'redo')
+    self.redoButton = makeButton(width//2+5*MARGIN, 'restart')
+        
     self.loadImages()
     self.createCards()
     tableau.tag_bind("card", '<ButtonPress-1>', self.onClick)
@@ -110,6 +114,7 @@ class View:
     tableau.canvas.bind('<ButtonRelease-1>', self.onDrop)
     tableau.tag_bind('undo', '<ButtonPress-1>', self.undo)
     tableau.tag_bind('redo', '<ButtonPress-1>', self.redo)
+    tableau.tag_bind('restart', '<ButtonPress-1>', self.restart)
     
     # Avoid scroll wheel problems on some Mac installations
     if sys.platform != 'darwin':
@@ -454,22 +459,29 @@ class View:
     self.model.redo()
     self.show()  
     
+  def restart(self, event):
+    self.model.restart()
+    self.show()
+    
   def disableRedo(self):
     self.tableau.itemconfigure('redo', state=tk.HIDDEN)
   
   def disableUndo(self):
     self.tableau.itemconfigure('undo', state=tk.HIDDEN)
+    self.tableau.itemconfigure('restart', state=tk.HIDDEN)
   
   def enableRedo(self):
     self.tableau.itemconfigure('redo', state=tk.NORMAL)
   
   def enableUndo(self):
     self.tableau.itemconfigure('undo', state=tk.NORMAL)
+    self.tableau.itemconfigure('restart', state=tk.NORMAL)
           
   def wm_delete_window(self):
       self.root.destroy()
 
   def done(self, num):
       self.root.destroy()    
-    
+  
+   
       
