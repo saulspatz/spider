@@ -400,7 +400,7 @@ class Model:
       card.showBack()
       self.stock.append(card)
       
-  def undoToLastDeal(self):
+  def redeal(self):
     try:
       while self.undoStack[-1] != DEAL:
         self.undo()

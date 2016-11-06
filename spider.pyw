@@ -53,6 +53,9 @@ In circular spider solitaire, a King may be placed on top of an Ace and a run ma
 OPTIONS
 The game may be played "open" so that all cards are dealt face up.  You can switch back and forth in the same game, so that you can "peek".  You can also switch back and forth between circular and normal mode, to allow a limited number of "cheats."
 
+BUTTONS
+The "Undo" and Redo" buttons are self-explanatory.  The "Restart" button puts the game back to the beginning, but you can still redo all your moves.  The "Redeal" button is similar, but it put the game back to the position just before the previous deal." 
+
 '''        
 class Spider:
   def __init__(self):

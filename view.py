@@ -105,7 +105,7 @@ class View:
     self.undoButton = makeButton(width//2-12*MARGIN, 'undo')
     self.redoButton = makeButton(width//2-4*MARGIN, 'redo')
     self.redoButton = makeButton(width//2+4*MARGIN, 'restart')
-    self.undoButton = makeButton(width//2+12*MARGIN, 'undeal')
+    self.undoButton = makeButton(width//2+12*MARGIN, 'redeal')
         
     self.loadImages()
     self.createCards()
@@ -116,7 +116,7 @@ class View:
     tableau.tag_bind('undo', '<ButtonPress-1>', self.undo)
     tableau.tag_bind('redo', '<ButtonPress-1>', self.redo)
     tableau.tag_bind('restart', '<ButtonPress-1>', self.restart)
-    tableau.tag_bind('undeal', '<ButtonPress-1>', self.undeal)
+    tableau.tag_bind('redeal', '<ButtonPress-1>', self.redeal)
     
     # Avoid scroll wheel problems on some Mac installations
     if sys.platform != 'darwin':
@@ -465,22 +465,22 @@ class View:
     self.model.restart()
     self.show()
     
-  def undeal(self, event):
-    self.model.undoToLastDeal()
+  def redeal(self, event):
+    self.model.redeal()
     self.show()
     
   def disableRedo(self):
     self.tableau.itemconfigure('redo', state=tk.HIDDEN)
   
   def disableUndo(self):
-    for item in ('undo', 'restart', 'undeal'):
+    for item in ('undo', 'restart', 'redeal'):
       self.tableau.itemconfigure(item, state=tk.HIDDEN)
     
   def enableRedo(self):
     self.tableau.itemconfigure('redo', state=tk.NORMAL)
   
   def enableUndo(self):
-    for item in ('undo', 'restart', 'undeal'):
+    for item in ('undo', 'restart', 'redeal'):
       self.tableau.itemconfigure(item, state=tk.NORMAL)
           
   def wm_delete_window(self):
