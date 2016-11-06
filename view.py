@@ -102,9 +102,10 @@ class View:
       tableau.create_text(left+3*MARGIN,2.5*MARGIN,text=text.title(),fill=CELEBRATE,tag=text,anchor=tk.CENTER)
       return button
     
-    self.undoButton = makeButton(width//2-11*MARGIN, 'undo')
-    self.redoButton = makeButton(width//2-3*MARGIN, 'redo')
-    self.redoButton = makeButton(width//2+5*MARGIN, 'restart')
+    self.undoButton = makeButton(width//2-12*MARGIN, 'undo')
+    self.redoButton = makeButton(width//2-4*MARGIN, 'redo')
+    self.redoButton = makeButton(width//2+4*MARGIN, 'restart')
+    self.undoButton = makeButton(width//2+12*MARGIN, 'undeal')
         
     self.loadImages()
     self.createCards()
@@ -115,6 +116,7 @@ class View:
     tableau.tag_bind('undo', '<ButtonPress-1>', self.undo)
     tableau.tag_bind('redo', '<ButtonPress-1>', self.redo)
     tableau.tag_bind('restart', '<ButtonPress-1>', self.restart)
+    tableau.tag_bind('undeal', '<ButtonPress-1>', self.undeal)
     
     # Avoid scroll wheel problems on some Mac installations
     if sys.platform != 'darwin':
@@ -463,19 +465,23 @@ class View:
     self.model.restart()
     self.show()
     
+  def undeal(self, event):
+    self.model.undoToLastDeal()
+    self.show()
+    
   def disableRedo(self):
     self.tableau.itemconfigure('redo', state=tk.HIDDEN)
   
   def disableUndo(self):
-    self.tableau.itemconfigure('undo', state=tk.HIDDEN)
-    self.tableau.itemconfigure('restart', state=tk.HIDDEN)
-  
+    for item in ('undo', 'restart', 'undeal'):
+      self.tableau.itemconfigure(item, state=tk.HIDDEN)
+    
   def enableRedo(self):
     self.tableau.itemconfigure('redo', state=tk.NORMAL)
   
   def enableUndo(self):
-    self.tableau.itemconfigure('undo', state=tk.NORMAL)
-    self.tableau.itemconfigure('restart', state=tk.NORMAL)
+    for item in ('undo', 'restart', 'undeal'):
+      self.tableau.itemconfigure(item, state=tk.NORMAL)
           
   def wm_delete_window(self):
       self.root.destroy()
@@ -483,5 +489,3 @@ class View:
   def done(self, num):
       self.root.destroy()    
   
-   
-      

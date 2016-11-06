@@ -399,6 +399,15 @@ class Model:
       card = w.pop()
       card.showBack()
       self.stock.append(card)
+      
+  def undoToLastDeal(self):
+    try:
+      while self.undoStack[-1] != DEAL:
+        self.undo()
+    except IndexError:
+      pass
+    if len(self.stock) != 50:
+      self.undo()
 
   def redo(self):
     ''''
@@ -426,11 +435,6 @@ class Model:
   def restart(self):
     while self.canUndo():
       self.undo()
-      
-  def save(self, filename):
-    with open(filename, 'wb') as fn:
-      pickle.dump((self.deck, self.undoStack, self.redoStack, self.stock, self.foundations,
-                          self.waste, self.circular, self.open), fn)
           
   def dealsLeft(self):
     return len(self.stock) // 10
