@@ -42,6 +42,21 @@ SCROLL_INTERVAL = 5     # miliseconds
 SCROLL_DISTANCE = '2m'
 imageDict = {}   # hang on to images, or they may disappear!
 
+class ButtonBar(tk.Canvas):
+  def __init__(self, parent):
+    super().__init__(parent, bg=BACKGROUND, bd=0, highlightthickness=0)
+    self.configure(height=5*MARGIN,width=10*XSPACING)
+    width=int(self['width'])
+    self.makeButton(width//2-12*MARGIN, 'undo')
+    self.makeButton(width//2-4*MARGIN, 'redo')
+    self.makeButton(width//2+4*MARGIN, 'restart')
+    self.makeButton(width//2+12*MARGIN, 'redeal')
+    self.place(in_=parent, relx=.5,y=0,anchor=tk.N)    
+  
+  def makeButton(self, left, text):
+    self.create_oval(left, MARGIN, left+6*MARGIN, 4*MARGIN, fill=BUTTON, outline=BUTTON, tag = text)
+    self.create_text(left+3*MARGIN,2.5*MARGIN,text=text.title(),fill=CELEBRATE,tag=text,anchor=tk.CENTER)
+ 
 class View: 
   '''
   Cards are represented as canvas image iitems,  displaying either the face
@@ -80,43 +95,36 @@ class View:
       x += XSPACING 
 
     status = tk.Frame(root, bg = STATUS_BG)
-    self.circular = tk.Label(status, text = " Circular ", relief = tk.RIDGE, font = STATUS_FONT,  bg = STATUS_BG, fg = 'Black', bd = 2)
-    self.open =     tk.Label(status, text = " Open     ", relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
-    self.deals =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
-    self.down =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
-    self.moves =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.circular = tk.Label(status, text = " Circular ", relief = tk.RIDGE, font = STATUS_FONT,
+                             bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.open =     tk.Label(status, text = " Open     ", relief = tk.RIDGE, font = STATUS_FONT, 
+                             bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.deals =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, 
+                             bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.down =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, 
+                            bg = STATUS_BG, fg = 'Black', bd = 2)
+    self.moves =    tk.Label(status, relief = tk.RIDGE, font = STATUS_FONT, 
+                             bg = STATUS_BG, fg = 'Black', bd = 2)
     self.circular.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.open.pack(expand=tk.NO, fill = tk.NONE, side = tk.LEFT)
     self.deals.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     self.down.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
     self.moves.pack(expand=tk.NO, fill = tk.NONE, side = tk.RIGHT)
-    tableau = self.tableau = ScrolledCanvas(root, bg=BACKGROUND, cursor=DEFAULT_CURSOR, scrolls=tk.VERTICAL, **kwargs)
+    tableau = self.tableau = ScrolledCanvas(root, bg=BACKGROUND, cursor=DEFAULT_CURSOR, 
+                                            scrolls=tk.VERTICAL, bd=0, highlightthickness=0, **kwargs)
     self.tableau.canvas['yscrollincrement'] = SCROLL_DISTANCE
     status.pack(expand=tk.NO, fill = tk.X, side=tk.BOTTOM)
     tableau.pack(expand=tk.YES, fill=tk.Y)
     width = kwargs['width']
     height = kwargs['height']
     
-    def makeButton(left, text):
-      button = tableau.create_oval(left, MARGIN, left+6*MARGIN, 4*MARGIN, fill=BUTTON, outline=BUTTON, tag = text)
-      tableau.create_text(left+3*MARGIN,2.5*MARGIN,text=text.title(),fill=CELEBRATE,tag=text,anchor=tk.CENTER)
-      return button
-    
-    self.undoButton = makeButton(width//2-12*MARGIN, 'undo')
-    self.redoButton = makeButton(width//2-4*MARGIN, 'redo')
-    self.redoButton = makeButton(width//2+4*MARGIN, 'restart')
-    self.undoButton = makeButton(width//2+12*MARGIN, 'redeal')
-        
     self.loadImages()
     self.createCards()
     tableau.tag_bind("card", '<ButtonPress-1>', self.onClick)
     tableau.tag_bind("card", '<Double-Button-1>', self.onDoubleClick)
     tableau.canvas.bind('<B1-Motion>', self.drag)
     tableau.canvas.bind('<ButtonRelease-1>', self.onDrop)
-    tableau.tag_bind('undo', '<ButtonPress-1>', self.undo)
-    tableau.tag_bind('redo', '<ButtonPress-1>', self.redo)
-    tableau.tag_bind('restart', '<ButtonPress-1>', self.restart)
-    tableau.tag_bind('redeal', '<ButtonPress-1>', self.redeal)
+    
     
     # Avoid scroll wheel problems on some Mac installations
     if sys.platform != 'darwin':
@@ -132,6 +140,11 @@ class View:
                         text = "'The game is done! I've won! I've won!'\nQuoth she, and whistles thrice.",
                         fill = BACKGROUND, font=("Times", "32", "bold"), tag = 'winText', anchor=tk.NW)
     self.scrolling = False
+    self.buttons = ButtonBar(self.tableau)
+    self.buttons.tag_bind('undo', '<ButtonPress-1>', self.undo)
+    self.buttons.tag_bind('redo', '<ButtonPress-1>', self.redo)
+    self.buttons.tag_bind('restart', '<ButtonPress-1>', self.restart)
+    self.buttons.tag_bind('redeal', '<ButtonPress-1>', self.redeal)    
     self.show()
     
   def start(self):
@@ -470,18 +483,18 @@ class View:
     self.show()
     
   def disableRedo(self):
-    self.tableau.itemconfigure('redo', state=tk.HIDDEN)
+    self.buttons.itemconfigure('redo', state=tk.HIDDEN)
   
   def disableUndo(self):
     for item in ('undo', 'restart', 'redeal'):
-      self.tableau.itemconfigure(item, state=tk.HIDDEN)
+      self.buttons.itemconfigure(item, state=tk.HIDDEN)
     
   def enableRedo(self):
-    self.tableau.itemconfigure('redo', state=tk.NORMAL)
+    self.buttons.itemconfigure('redo', state=tk.NORMAL)
   
   def enableUndo(self):
     for item in ('undo', 'restart', 'redeal'):
-      self.tableau.itemconfigure(item, state=tk.NORMAL)
+      self.buttons.itemconfigure(item, state=tk.NORMAL)
           
   def wm_delete_window(self):
       self.root.destroy()
