@@ -288,7 +288,7 @@ class View:
     north, south = canvas.yview()
     extent = int(canvas['scrollregion'].split()[3])
     south  = int( south*extent)
-    north =  int(north*extent)
+    north =  int(north*extent) + self.buttons.winfo_height() + 5
     try:
       left, top, right, bottom = canvas.bbox('current')
       if bottom > south:
