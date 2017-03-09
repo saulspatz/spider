@@ -211,6 +211,8 @@ class View:
     self.deals.configure(text='Deals %d'%model.dealsLeft())
     self.down.configure(text='Down %d'%model.downCards())
     self.moves.configure(text='Moves %d'%model.moves())
+    if model.win():
+      self.tableau.canvas.yview_moveto(0.0)
     
   def dealUp(self):
     self.model.dealUp()
